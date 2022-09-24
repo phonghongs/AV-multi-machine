@@ -26,7 +26,6 @@ import time
 import tensorrt as trt
 # import torch_tensorrt
 
-from test_onnx_run import to_numpy
 # from torch2trt import tensorrt_converter,torch2trt
 sys.path.append(os.getcwd())
 # sys.path.append("lib/models")
