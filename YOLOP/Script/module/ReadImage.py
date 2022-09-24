@@ -25,10 +25,9 @@ class ReadImage(threading.Thread):
                 self.threadDataComp.isQuit = True
                 break
 
-            if (self.threadDataComp.ImageQueue.qsize() > 0):
-                self.threadDataComp.ImageQueue.get()
             self.threadDataComp.ImageQueue.put(result)
-            print("[ReadImage] Done at: ", time.time() - pre)
+            self.threadDataComp.totalTime.put(time.time() - pre)
+            # print("[ReadImage] Done at: ", time.time() - pre)
             # logging.debug("Done at: %s", time.time() - pre)
 
     def load_img(self):
@@ -36,10 +35,11 @@ class ReadImage(threading.Thread):
         #                 cv2.IMREAD_IGNORE_ORIENTATION)
         ret, img0 = self.videoCap.read(cv2.IMREAD_COLOR |
                             cv2.IMREAD_IGNORE_ORIENTATION)
-        h0, w0 = img0.shape[:2]
+        img = cv2.resize(img0, (640, 384))
+        # h0, w0 = img0.shape[:2]
 
-        img, ratio, pad = letterbox_for_img(img0.copy(), new_shape=640, auto=True)
-        h, w = img.shape[:2]
-        shapes = (h0, w0), ((h / h0, w / w0), pad)
+        # img, ratio, pad = letterbox_for_img(img0.copy(), new_shape=640, auto=True)
+        # h, w = img.shape[:2]
+        # shapes = (h0, w0), ((h / h0, w / w0), pad)
         img = np.ascontiguousarray(img)
-        return [img, img0, shapes]
+        return [img, img0]

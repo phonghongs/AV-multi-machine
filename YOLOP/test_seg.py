@@ -69,7 +69,7 @@ def main():
     img = transform(img)
     if img.ndimension() == 3:
         img = img.unsqueeze(0)
-
+    out2 = np.load('outNe.npy')
     #truyen out 2 vao
     out_seg = inference_seg(out2)
     

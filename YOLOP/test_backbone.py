@@ -30,15 +30,21 @@ if trt.__version__[0] >= '7':
 
 
 def load_img(path):
-    img0 = cv2.imread(path, cv2.IMREAD_COLOR |
-                      cv2.IMREAD_IGNORE_ORIENTATION)  # BGR
+    # img0 = cv2.imread(path, cv2.IMREAD_COLOR |
+    #                   cv2.IMREAD_IGNORE_ORIENTATION)  # BGR
+
+    _, img0 = path.read(cv2.IMREAD_COLOR |
+                      cv2.IMREAD_IGNORE_ORIENTATION)
     h0, w0 = img0.shape[:2]
 
-    img, ratio, pad = letterbox_for_img(img0.copy(), new_shape=640, auto=True)
-    h, w = img.shape[:2]
-    shapes = (h0, w0), ((h / h0, w / w0), pad)
+    img = cv2.resize(img0, (640, 384))
+
+    # img, ratio, pad = letterbox_for_img(img0.copy(), new_shape=640, auto=True)
+    # h, w = img.shape[:2]
+    # shapes = (h0, w0), ((h / h0, w / w0), pad)
+    # print(img.shape)
     img = np.ascontiguousarray(img)
-    return img, img0, shapes
+    return img, img0, _
 def load_engine(trt_file_path, verbose=False):
     """Build a TensorRT engine from a TRT file."""
     TRT_LOGGER = trt.Logger(trt.Logger.VERBOSE) if verbose else trt.Logger()
@@ -71,13 +77,16 @@ def inference_bb(img):
 
 # with open('dumm.txt') as context:
 def main():
-    img_original, img_det, shapes = load_img(
-        '/home/tx2/YOLOP/inference/images/0ace96c3-48481887.jpg')
+    # img_original, img_det, shapes = load_img(
+    #     '/home/tx2/YOLOP/inference/images/0ace96c3-48481887.jpg')
     
+    cap = cv2.VideoCapture('/home/tx2/AV-multi-machine/YOLOP/inference/videos/1.mp4')
+
     pre = 0
 
     while True:
         pre = time.time()
+        img_original, img_det, shapes = load_img(cap)
         img = transform(img_original)
         img = img.float()
         if img.ndimension() == 3:
