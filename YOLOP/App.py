@@ -33,6 +33,7 @@ def main():
     tranformTask.start()
     inferenceTask.start()
 
+    time.sleep(10)
     threadDataComp.isQuit = True
     while not threadDataComp.ImageQueue.empty():
         threadDataComp.ImageQueue.get()

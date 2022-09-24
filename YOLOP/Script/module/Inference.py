@@ -11,11 +11,11 @@ from Script.Component.ThreadDataComp import ThreadDataComp
 
 class Inference(threading.Thread):
     def __init__(self, _threadDataComp: ThreadDataComp):
+        threading.Thread.__init__(self, args=(), kwargs=None)
+        self.daemon = True
         self.threadDataComp = _threadDataComp
         self.engine = self.load_engine(self.threadDataComp.ModelPath, False)
         self.h_inputs, self.h_outputs, self.bindings, self.stream = common.allocate_buffers(self.engine)
-        threading.Thread.__init__(self, args=(), kwargs=None)
-        self.daemon = True
 
     def load_engine(self, trt_file_path, verbose=False):
         """Build a TensorRT engine from a TRT file."""
@@ -64,7 +64,7 @@ class Inference(threading.Thread):
                 outs
             )
             self.threadDataComp.totalTime.put(time.time() - pre)
-            # print("[Inference] Total Time", time.time() - pre)
+            print("[Inference] Total Time", time.time() - pre)
     
     def __del__(self):
         del self.engine
