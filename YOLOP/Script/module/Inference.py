@@ -9,12 +9,13 @@ import common
 from Script.Component.ThreadDataComp import ThreadDataComp
 
 
-class Inference():
+class Inference(threading.Thread):
     def __init__(self, _threadDataComp: ThreadDataComp):
         self.threadDataComp = _threadDataComp
-        self.daemon = True
         self.engine = self.load_engine(self.threadDataComp.ModelPath, False)
         self.h_inputs, self.h_outputs, self.bindings, self.stream = common.allocate_buffers(self.engine)
+        threading.Thread.__init__(self, args=(), kwargs=None)
+        self.daemon = True
 
     def load_engine(self, trt_file_path, verbose=False):
         """Build a TensorRT engine from a TRT file."""
@@ -48,7 +49,10 @@ class Inference():
 
         while not self.threadDataComp.isQuit:
             pre = time.time()
-            getImage = self.threadDataComp.TransformQueue.get()
+
+            with self.threadDataComp.TransformCondition:
+                self.threadDataComp.TransformCondition.wait()
+            getImage = self.threadDataComp.TransformQueue.get(timeout=1)
 
             if getImage is None:
                 print("[Inference] Error when get Image in queue")
