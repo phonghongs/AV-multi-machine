@@ -9,10 +9,11 @@ import common
 from Script.Component.ThreadDataComp import ThreadDataComp
 
 
-class Inference():
+class Inference(threading.Thread):
     def __init__(self, _threadDataComp: ThreadDataComp):
-        self.threadDataComp = _threadDataComp
+        threading.Thread.__init__(self, args=(), kwargs=None)
         self.daemon = True
+        self.threadDataComp = _threadDataComp
         self.engine = self.load_engine(self.threadDataComp.ModelPath, False)
         self.h_inputs, self.h_outputs, self.bindings, self.stream = common.allocate_buffers(self.engine)
 
@@ -48,7 +49,10 @@ class Inference():
 
         while not self.threadDataComp.isQuit:
             pre = time.time()
-            getImage = self.threadDataComp.TransformQueue.get()
+
+            with self.threadDataComp.TransformCondition:
+                self.threadDataComp.TransformCondition.wait()
+            getImage = self.threadDataComp.TransformQueue.get(timeout=1)
 
             if getImage is None:
                 print("[Inference] Error when get Image in queue")
@@ -60,7 +64,7 @@ class Inference():
                 outs
             )
             self.threadDataComp.totalTime.put(time.time() - pre)
-            # print("[Inference] Total Time", time.time() - pre)
+            print("[Inference] Total Time", time.time() - pre)
     
     def __del__(self):
         del self.engine
