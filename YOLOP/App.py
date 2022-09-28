@@ -1,5 +1,6 @@
 import logging
 import time
+import numpy as np
 from Script.Component.ThreadDataComp import ThreadDataComp
 from Script.module.ReadImage import ReadImage
 from Script.module.TransfromImage import TransfromImage
@@ -8,12 +9,13 @@ from queue import Queue
 
 global threadDataComp
 threadDataComp = ThreadDataComp(
+    Queue(maxsize=3), 
+    Queue(maxsize=3), 
     Queue(), 
-    Queue(), 
-    Queue(), 
-    '/home/tx2/AV-multi-machine/YOLOP/inference/videos/1.mp4',
+    '/home/tx2/AV-multi-machine/YOLOP/inference/videos/data_test.mp4',
     'jetson-trt/bb.trt',
-    False
+    False,
+    Queue()
 )
 
 def main():
@@ -26,13 +28,26 @@ def main():
     readImageTask.start()
     tranformTask.start()
     inferenceTask.run()
-    time.sleep(10)
+
 
     threadDataComp.isQuit = True
+    while not threadDataComp.ImageQueue.empty():
+        threadDataComp.ImageQueue.get()
+    
+    while not threadDataComp.TransformQueue.empty():
+        threadDataComp.TransformQueue.get()
+    
     readImageTask.join()
     tranformTask.join()
 
-    print("[App]: ", threadDataComp.ImageQueue.qsize(), threadDataComp.TransformQueue.qsize(), threadDataComp.OutputQueue.qsize())
+    timeSize = threadDataComp.totalTime.qsize()
+    count = 0
+    while not threadDataComp.totalTime.empty():
+        count += threadDataComp.totalTime.get()
+    
+    out = threadDataComp.OutputQueue.get()
+    np.save('outNe.npy', out[2])
+    print("[App]: ", threadDataComp.ImageQueue.qsize(), threadDataComp.TransformQueue.qsize(), threadDataComp.OutputQueue.qsize(), count / timeSize)
 
 if __name__ == "__main__":
     main()

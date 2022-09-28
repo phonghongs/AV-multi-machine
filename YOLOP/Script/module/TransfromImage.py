@@ -21,23 +21,21 @@ class TransfromImage(threading.Thread):
     def run(self):
         print(threading.currentThread().getName())
         while not self.threadDataComp.isQuit:
-            if not self.threadDataComp.ImageQueue.empty():
-                pre = time.time()
-                getImage = self.threadDataComp.ImageQueue.get(timeout=1)
+            pre = time.time()
+            getImage = self.threadDataComp.ImageQueue.get()
 
-                if getImage is None:
-                    print("[TransFromImage] Error when get Image in queue")
-                    break
+            if getImage is None:
+                print("[TransFromImage] Error when get Image in queue")
+                break
 
-                img = self.transform(getImage[0])
-                img = img.float()
-                if img.ndimension() == 3:
-                    img = img.unsqueeze(0)
+            img = self.transform(getImage[0])
+            img = img.float()
+            if img.ndimension() == 3:
+                img = img.unsqueeze(0)
 
-                if self.threadDataComp.TransformQueue.qsize() > 0:
-                    self.threadDataComp.TransformQueue.get()
-                self.threadDataComp.TransformQueue.put(
-                    img
-                )
+            self.threadDataComp.TransformQueue.put(
+                img
+            )
+            self.threadDataComp.totalTime.put(time.time() - pre)
 
-                print("[Transform] Timer ", time.time() - pre)
+            # print("[Transform] Timer ", time.time() - pre)

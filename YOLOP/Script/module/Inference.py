@@ -48,22 +48,19 @@ class Inference():
 
         while not self.threadDataComp.isQuit:
             pre = time.time()
-            if not self.threadDataComp.TransformQueue.empty():
-                getImage = self.threadDataComp.TransformQueue.get(timeout=1)
+            getImage = self.threadDataComp.TransformQueue.get()
 
-                if getImage is None:
-                    print("[Inference] Error when get Image in queue")
-                    break
-                
-                outs = self.inference_bb(getImage.numpy())
-                
-                if self.threadDataComp.OutputQueue.qsize() > 0:
-                    self.threadDataComp.OutputQueue.get()
-                self.threadDataComp.OutputQueue.put(
-                    outs
-                )
-
-                print("[Inference] Total Time", time.time() - pre)
+            if getImage is None:
+                print("[Inference] Error when get Image in queue")
+                break
+            
+            outs = self.inference_bb(getImage.numpy())
+            
+            self.threadDataComp.OutputQueue.put(
+                outs
+            )
+            self.threadDataComp.totalTime.put(time.time() - pre)
+            # print("[Inference] Total Time", time.time() - pre)
     
     def __del__(self):
         del self.engine
