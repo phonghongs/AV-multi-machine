@@ -9,9 +9,8 @@ import common
 from Script.Component.ThreadDataComp import ThreadDataComp
 
 
-class Inference(threading.Thread):
+class Inference():
     def __init__(self, _threadDataComp: ThreadDataComp):
-        threading.Thread.__init__(self, args=(), kwargs=None)
         self.daemon = True
         self.threadDataComp = _threadDataComp
         self.engine = self.load_engine(self.threadDataComp.ModelPath, False)
@@ -60,9 +59,14 @@ class Inference(threading.Thread):
             
             outs = self.inference_bb(getImage.numpy())
             
-            self.threadDataComp.OutputQueue.put(
-                outs
-            )
+            if self.threadDataComp.OutputQueue.full():
+                self.threadDataComp.OutputQueue.get()
+            self.threadDataComp.OutputQueue.put(outs)
+
+            with self.threadDataComp.OutputCondition:
+                if self.threadDataComp.OutputQueue.qsize() > 0:
+                    self.threadDataComp.OutputCondition.notifyAll()
+
             self.threadDataComp.totalTime.put(time.time() - pre)
             print("[Inference] Total Time", time.time() - pre)
     
