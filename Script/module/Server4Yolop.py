@@ -47,28 +47,29 @@ class ServerPerception(threading.Thread):
         server.bind((self.connectComp.serverIP, self.connectComp.serverPort))
         server.listen(8)
         server.setblocking(False)
-        server.settimeout(3)
+        # server.settimeout(3)
+        loop = asyncio.get_event_loop()
 
         while not self.threadDataComp.isQuit:
-            client, _ = await self.loop.sock_accept(server)
-            print(client)
-            # self.loop.create_task(self.handle_client(client))
+            try:
+                client, _ = await loop.sock_accept(server)
+                loop.create_task(self.handle_client(client))
+            except Exception as ex:
+                print("[Server] ", ex)
 
     async def handle_client(self, client):
+        loop = asyncio.get_event_loop()
         request = None
-        fs = FrameSegment(self.loop, client)
-
+        fs = FrameSegment(loop, client)
+        print("[Server]: In")
         while request != 'quit' or not self.threadDataComp.isQuit:
-            request = (await self.loop.sock_recv(client, 1024)).decode('utf8')
+            request = (await loop.sock_recv(client, 1024)).decode('utf8')
 
             with self.threadDataComp.OutputCondition:
-                self.threadDataComp.OutputCondition.wait()
-            output = self.threadDataComp.OutputQueue.get(timeout=1)
+                outcache = (self.threadDataComp.output).any()
+            output = outcache
 
-            if output is None:
-                print("[TransFromImage] Error when get Image in queue")
-                self.threadDataComp.isQuit = True
-                break
+            print("OK", len(output))
 
             if (request == 'JETSON1'):
                 await fs.udp_frame(output[2])

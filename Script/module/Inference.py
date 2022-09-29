@@ -59,13 +59,16 @@ class Inference():
             
             outs = self.inference_bb(getImage.numpy())
             
-            if self.threadDataComp.OutputQueue.full():
-                self.threadDataComp.OutputQueue.get()
-            self.threadDataComp.OutputQueue.put(outs)
-
             with self.threadDataComp.OutputCondition:
-                if self.threadDataComp.OutputQueue.qsize() > 0:
-                    self.threadDataComp.OutputCondition.notifyAll()
+                self.threadDataComp.output = outs
+
+            # if self.threadDataComp.OutputQueue.full():
+            #     self.threadDataComp.OutputQueue.get()
+            # self.threadDataComp.OutputQueue.put(outs)
+
+            # with self.threadDataComp.OutputCondition:
+            #     if self.threadDataComp.OutputQueue.qsize() > 0:
+            #         self.threadDataComp.OutputCondition.notifyAll()
 
             self.threadDataComp.totalTime.put(time.time() - pre)
             print("[Inference] Total Time", time.time() - pre)

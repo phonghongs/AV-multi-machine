@@ -2,6 +2,7 @@ import logging
 import time
 import numpy as np
 import threading
+import asyncio
 from Script.Component.ThreadDataComp import ThreadDataComp
 from Script.Component.ConnectComp import ConnectComp
 from Script.module.ReadImage import ReadImage
@@ -14,19 +15,20 @@ global threadDataComp, connectComp
 threadDataComp = ThreadDataComp(
     Queue(maxsize=3), 
     Queue(maxsize=3), 
-    Queue(maxsize=3), 
+    asyncio.Queue(maxsize=3), 
     threading.Condition(),
     threading.Condition(),
-    threading.Condition(),    
-    '/home/tx2/AV-multi-machine/YOLOP/inference/videos/data_test.mp4',
+    threading.Lock(),    
+    '/home/tx2/AV-multi-machine/inference/videos/data_test.mp4',
     'jetson-trt/bb.trt',
     False,
-    Queue()
+    Queue(),
+    []
 )
 
 connectComp = ConnectComp(
     '0.0.0.0',
-    '5555',
+    5555,
     False
 )
 
@@ -37,14 +39,14 @@ def main():
     readImageTask = ReadImage(threadDataComp)
     tranformTask = TransfromImage(threadDataComp)
     inferenceTask = Inference(threadDataComp)
-    serverPerception = ServerPerception(threadDataComp)
+    serverPerception = ServerPerception(threadDataComp, connectComp)
 
     print("[App]: Ready to start")
 
     readImageTask.start()
     tranformTask.start()
-    inferenceTask.start()
     serverPerception.start()
+    inferenceTask.run()
 
     time.sleep(10)
     threadDataComp.isQuit = True
