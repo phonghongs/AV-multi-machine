@@ -66,15 +66,15 @@ class ServerPerception(threading.Thread):
             request = (await loop.sock_recv(client, 1024)).decode('utf8')
 
             with self.threadDataComp.OutputCondition:
-                outcache = (self.threadDataComp.output).any()
+                outcache = self.threadDataComp.output
             output = outcache
 
-            print("OK", len(output))
+            print("OK", len(output), type(output[2]), output[2].dtype)
 
             if (request == 'JETSON1'):
-                await fs.udp_frame(output[2])
+                await fs.udp_frame(output[2].tobytes())
             elif (request == 'JETSON2'):
-                stackOutput = output.flatten()
+                stackOutput = output.flatten().tobytes()
                 arraySize = f"{len(output[0])}|||"
                 data = bytes(arraySize, 'ascii') + stackOutput
                 await fs.udp_frame(data)

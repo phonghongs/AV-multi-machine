@@ -73,6 +73,8 @@ def main():
     #truyen out 2 vao
     out_seg = inference_seg(out2)
     
+    print(type(img), img.dtype, shapes)
+
     color_area = post_process_seg( torch.tensor(out_seg), img, shapes)
     cv2.imwrite('test_trt2_seg_a.jpg', color_area)
 if __name__ =='__main__':

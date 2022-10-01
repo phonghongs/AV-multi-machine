@@ -16,9 +16,9 @@ raw_image = []
 done = False
 
 ip = "0.0.0.0"
-port = 15555
+port = 5555
 
-raw_image = np.load('tensor8b_2.npy').tobytes()
+raw_image = np.load('testtensor.npy')
 a = np.load('tensor8b_0.npy')
 b = np.load('tensor8b_1.npy')
 c = np.hstack((a, b))
@@ -54,7 +54,7 @@ async def handle_client(client):
         request = (await loop.sock_recv(client, 1024)).decode('utf8')
 
         if (request == 'JETSON1'):
-            await fs.udp_frame(raw_image)
+            await fs.udp_frame(raw_image.tobytes())
         elif (request == 'JETSON2'):
             arraySize = f"{len(a)}|||"
             data = bytes(arraySize, 'ascii') + c

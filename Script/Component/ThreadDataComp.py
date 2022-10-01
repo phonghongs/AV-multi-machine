@@ -18,3 +18,5 @@ class ThreadDataComp():
     isQuit: bool
     totalTime: Queue
     output : list
+    QuantaQueue: Queue
+    QuantaCondition: threading.Condition

@@ -23,9 +23,9 @@ class TransfromImage(threading.Thread):
         while not self.threadDataComp.isQuit:
             pre = time.time()
 
-            with self.threadDataComp.ImageCondition:
-                self.threadDataComp.ImageCondition.wait()
-            getImage = self.threadDataComp.ImageQueue.get(timeout=1)
+            # with self.threadDataComp.ImageCondition:
+            #     self.threadDataComp.ImageCondition.wait()
+            getImage = self.threadDataComp.ImageQueue.get()
 
             if getImage is None:
                 print("[TransFromImage] Error when get Image in queue")
@@ -36,14 +36,14 @@ class TransfromImage(threading.Thread):
             if img.ndimension() == 3:
                 img = img.unsqueeze(0)
 
-            if self.threadDataComp.TransformQueue.full():
-                self.threadDataComp.TransformQueue.get()
+            # if self.threadDataComp.TransformQueue.full():
+            #     self.threadDataComp.TransformQueue.get()
             self.threadDataComp.TransformQueue.put(img)
 
-            with self.threadDataComp.TransformCondition:
-                if self.threadDataComp.TransformQueue.qsize() > 0:
-                    self.threadDataComp.TransformCondition.notifyAll()
+            # with self.threadDataComp.TransformCondition:
+            #     if self.threadDataComp.TransformQueue.qsize() > 0:
+            #         self.threadDataComp.TransformCondition.notifyAll()
 
-            self.threadDataComp.totalTime.put(time.time() - pre)
+            # self.threadDataComp.totalTime.put(time.time() - pre)
 
             # print("[Transform] Timer ", time.time() - pre)

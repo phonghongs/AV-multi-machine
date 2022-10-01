@@ -80,7 +80,7 @@ def main():
     # img_original, img_det, shapes = load_img(
     #     '/home/tx2/YOLOP/inference/images/0ace96c3-48481887.jpg')
     
-    cap = cv2.VideoCapture('/home/tx2/AV-multi-machine/YOLOP/inference/videos/1.mp4')
+    cap = cv2.VideoCapture('/home/tx2/AV-multi-machine/inference/videos/data_test.mp4')
 
     pre = 0
 

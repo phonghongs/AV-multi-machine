@@ -8,6 +8,7 @@ from Script.Component.ConnectComp import ConnectComp
 from Script.module.ReadImage import ReadImage
 from Script.module.TransfromImage import TransfromImage
 from Script.module.Inference import Inference
+from Script.module.Quanta import Quanta
 from Script.module.Server4Yolop import ServerPerception
 from queue import Queue
 
@@ -23,7 +24,9 @@ threadDataComp = ThreadDataComp(
     'jetson-trt/bb.trt',
     False,
     Queue(),
-    []
+    [],
+    Queue(maxsize=3),
+    threading.Condition()
 )
 
 connectComp = ConnectComp(
@@ -38,6 +41,7 @@ def main():
     logging.basicConfig(filename="runtime.log", filemode='w', format=FORMAT)
     readImageTask = ReadImage(threadDataComp)
     tranformTask = TransfromImage(threadDataComp)
+    quantaTask = Quanta(threadDataComp)
     inferenceTask = Inference(threadDataComp)
     serverPerception = ServerPerception(threadDataComp, connectComp)
 
@@ -45,6 +49,7 @@ def main():
 
     readImageTask.start()
     tranformTask.start()
+    quantaTask.start()
     serverPerception.start()
     inferenceTask.run()
 
@@ -56,14 +61,24 @@ def main():
     while not threadDataComp.TransformQueue.empty():
         threadDataComp.TransformQueue.get()
 
+    while not threadDataComp.QuantaQueue.empty():
+        threadDataComp.QuantaQueue.get()
+
+    threadDataComp.ImageQueue.put(None)
+    threadDataComp.TransformQueue.put(None)
+    threadDataComp.QuantaQueue.put(None)
+
     readImageTask.join()
     tranformTask.join()
+    quantaTask.join()
     serverPerception.join()
 
     timeSize = threadDataComp.totalTime.qsize()
     count = 0
     while not threadDataComp.totalTime.empty():
         count += threadDataComp.totalTime.get()
+
+    # np.save('testtensor.npy', threadDataComp.output[2])
 
     print("[App]: ", threadDataComp.ImageQueue.qsize(), threadDataComp.TransformQueue.qsize(), threadDataComp.OutputQueue.qsize(), count / timeSize)
 
