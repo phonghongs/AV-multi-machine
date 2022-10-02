@@ -15,20 +15,10 @@ class Quanta(threading.Thread):
         # maxa,mina=np.max(a),np.min(a)
         maxa, mina = 8.0, -0.375
         # print('maxmin aaa: ', time.time()- pre_a, maxa, mina)
-        
-        # pre_a = time.time()
         c = (maxa- mina)/(255)
-        # print('maxmin c: ', time.time()- pre_a)
-        
-        # pre_a = time.time()
         d = np.round_((mina*255)/(maxa - mina))
-        # print('maxmin d: ', time.time()- pre_a)
         
-        # pre_a = time.time()
         a = a/c - d
-        # print('maxmin a: ', time.time()- pre_a)
-
-        # print("______________________________________________")
         return a.astype('uint8')
 
     def run(self):

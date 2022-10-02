@@ -4,19 +4,17 @@ import threading
 import asyncio
 from dataclasses import dataclass
 
-
 @dataclass
 class ThreadDataComp():
     ImageQueue: Queue
     TransformQueue: Queue
-    OutputQueue: asyncio.Queue
+    QuantaQueue: Queue
+    totalTime: Queue
     ImageCondition: threading.Condition
     TransformCondition: threading.Condition
+    QuantaCondition: threading.Condition
     OutputCondition: threading.Lock
     ImagePath: string
     ModelPath: string
     isQuit: bool
-    totalTime: Queue
     output : list
-    QuantaQueue: Queue
-    QuantaCondition: threading.Condition

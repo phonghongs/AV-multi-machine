@@ -47,7 +47,6 @@ class ServerPerception(threading.Thread):
         server.bind((self.connectComp.serverIP, self.connectComp.serverPort))
         server.listen(8)
         server.setblocking(False)
-        # server.settimeout(3)
         loop = asyncio.get_event_loop()
 
         while not self.threadDataComp.isQuit:
@@ -69,7 +68,7 @@ class ServerPerception(threading.Thread):
                 outcache = self.threadDataComp.output
             output = outcache
 
-            print("OK", len(output), type(output[2]), output[2].dtype)
+            # print("OK", len(output), type(output[2]), output[2].dtype)
 
             if (request == 'JETSON1'):
                 await fs.udp_frame(output[2].tobytes())
@@ -82,4 +81,3 @@ class ServerPerception(threading.Thread):
                 await fs.udp_frame(output[0])
 
         client.close()
-

@@ -14,19 +14,18 @@ from queue import Queue
 
 global threadDataComp, connectComp
 threadDataComp = ThreadDataComp(
-    Queue(maxsize=3), 
-    Queue(maxsize=3), 
-    asyncio.Queue(maxsize=3), 
+    Queue(maxsize=3),   #Image Queue
+    Queue(maxsize=3),   #Transform Queue
+    Queue(maxsize=3),   #Quanta Queue
+    Queue(),            #Total Time Queue
+    threading.Condition(),  
     threading.Condition(),
     threading.Condition(),
     threading.Lock(),    
     '/home/tx2/AV-multi-machine/inference/videos/data_test.mp4',
     'jetson-trt/bb.trt',
     False,
-    Queue(),
     [],
-    Queue(maxsize=3),
-    threading.Condition()
 )
 
 connectComp = ConnectComp(
@@ -54,7 +53,9 @@ def main():
     inferenceTask.run()
 
     time.sleep(10)
+
     threadDataComp.isQuit = True
+
     while not threadDataComp.ImageQueue.empty():
         threadDataComp.ImageQueue.get()
     
@@ -78,7 +79,7 @@ def main():
     while not threadDataComp.totalTime.empty():
         count += threadDataComp.totalTime.get()
 
-    # np.save('testtensor.npy', threadDataComp.output[2])
+    np.save('testtensor.npy', threadDataComp.output[2])
 
     print("[App]: ", threadDataComp.ImageQueue.qsize(), threadDataComp.TransformQueue.qsize(), threadDataComp.OutputQueue.qsize(), count / timeSize)
 
