@@ -50,7 +50,9 @@ def quantize(a):
     d = np.round_((mina*255)/(maxa - mina))
     a = np.round_((1/c)*a-d)
     return a.astype('uint8'), c, d
+
 engine = load_engine('jetson-trt/seg.trt', False)
+
 def inference_seg(out2):
     '''
     input: outs[2] of backbone
@@ -65,11 +67,11 @@ def inference_seg(out2):
 
 def main():
     img, img_det, shapes = load_img(
-        '/home/tx2/YOLOP/inference/images/0ace96c3-48481887.jpg')
+        '/home/ceec/AV-multi-machine/inference/images/0ace96c3-48481887.jpg')
     img = transform(img)
     if img.ndimension() == 3:
         img = img.unsqueeze(0)
-    out2 = np.load('outNe.npy')
+    out2 = np.load('testtensor.npy')
     #truyen out 2 vao
     out_seg = inference_seg(out2)
     

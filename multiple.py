@@ -148,8 +148,10 @@ def load_img(path):
     return img, img0, shapes
 
 
-def post_process_seg(da_seg_out, img, shapes):
-    _, _, height, width = img.shape
+def post_process_seg(da_seg_out):
+    # _, _, height, width = img.shape
+    shapes = ((720, 1280), ((0.5333333333333333, 0.5), (0.0, 12.0)))
+    height, width = 384, 640
     # h, w, _ = img_det.shape
     pad_w, pad_h = shapes[1][1]
     pad_w = int(pad_w)

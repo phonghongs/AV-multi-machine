@@ -8,6 +8,7 @@ import numpy as np
 import socket
 import struct
 import time
+from multiple import *
 
 global pre, raw_image
 pre = time.time()
@@ -24,8 +25,15 @@ def main():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('192.168.1.91', 5555))
     done = False
+
+    output = cv2.VideoWriter('filename.avi', 
+                         cv2.VideoWriter_fourcc(*'MJPG'),
+                         10, (1280, 720))
+
+    pre = time.time()
+
     print("OK")
-    while not done:
+    while time.time() - pre < 20:
         pre = time.time()
         s.send(CLIENT_ID.encode('utf8'))
         bs = s.recv(8)
@@ -39,10 +47,16 @@ def main():
             data += s.recv(
                 MAX_DGRAM if to_read > MAX_DGRAM else to_read)
 
-        result = np.frombuffer(data, dtype=np.uint8)
-        # print(len(data))
+        result = np.frombuffer(data, dtype=np.uint8).reshape(1, 256, 48, 80)
+        try:
+            color_area = post_process_seg(torch.tensor(result))
+            output.write(color_area)
+        except Exception as e:
+            print(e)
+
         print((time.time() - pre), data == raw_image)
 
+    output.release()
     s.send("quit".encode('utf8'))
     s.close()
 
