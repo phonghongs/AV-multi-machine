@@ -9,16 +9,30 @@ class Quanta(threading.Thread):
         threading.Thread.__init__(self, args=(), kwargs=None)
         self.threadDataComp = _threadDataComp
         self.daemon = True
+        self.f = -1000
+        self.g = 1000
 
+    # def quantize(self, a):
+    #     pre_a = time.time()
+    #     maxa,mina=np.max(a),np.min(a)
+    #     # maxa, mina = 8.0, -0.375
+    #     # print('maxmin aaa: ', time.time()- pre_a, maxa, mina)
+    #     c = (maxa- mina)/(255)
+    #     d = np.round_((mina*255)/(maxa - mina))
+        
+    #     a = a/c - d
+    #     return a.astype('uint8')
+
+    
     def quantize(self, a):
-        pre_a = time.time()
         # maxa,mina=np.max(a),np.min(a)
-        maxa, mina = 8.0, -0.375
-        # print('maxmin aaa: ', time.time()- pre_a, maxa, mina)
+        maxa, mina = 9.7578125, -0.375
         c = (maxa- mina)/(255)
         d = np.round_((mina*255)/(maxa - mina))
-        
-        a = a/c - d
+        a = np.round_((1/c)*a-d)
+        self.f = max(self.f, maxa)
+        self.g = min(self.g, mina)
+        # print(self.f, self.g)
         return a.astype('uint8')
 
     def run(self):
@@ -41,10 +55,8 @@ class Quanta(threading.Thread):
             # output[0] = self.quantize(output[0])
             # output[1] = self.quantize(output[1])
             output[2] = self.quantize(output[2])
-
+            # print(output[2].dtype, type(output[2]), output[2].shape)
             with self.threadDataComp.OutputCondition:
                 self.threadDataComp.output = output
 
             self.threadDataComp.totalTime.put(time.time() - pre)
-
-            print("[Quanta] Timer ", time.time() - pre)

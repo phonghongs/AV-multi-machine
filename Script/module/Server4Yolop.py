@@ -9,7 +9,8 @@ import socket
 import struct
 from Script.Component.ThreadDataComp import ThreadDataComp
 from Script.Component.ConnectComp import ConnectComp
-
+from Script.Component.MQTTComp import MQTTComp
+from random import randrange
 
 class FrameSegment(object):
     def __init__(self, loop, client):
@@ -27,14 +28,20 @@ class FrameSegment(object):
         await self.loop.sock_sendall(self.client, length)
         await self.loop.sock_sendall(self.client, img)
 
-
 class ServerPerception(threading.Thread):
-    def __init__(self, _threadDataComp: ThreadDataComp, _connectComp: ConnectComp):
+    def __init__(self, _threadDataComp: ThreadDataComp, _connectComp: ConnectComp, _mqttComp: MQTTComp):
         threading.Thread.__init__(self, args=(), kwargs=None)
         self.threadDataComp = _threadDataComp
         self.connectComp = _connectComp
+        self.mqttComp = _mqttComp
         self.daemon = True
         self.loop = asyncio.get_event_loop()
+
+    def delInstance(self):
+        print('received stop signal, cancelling tasks...')
+        for task in asyncio.Task.all_tasks():
+            task.cancel()
+        print('bye, exiting in a minute...')    
 
     def run(self):
         asyncio.set_event_loop(self.loop)
@@ -42,7 +49,7 @@ class ServerPerception(threading.Thread):
 
     async def run_server(self):
         print(threading.currentThread().getName())
-
+    
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind((self.connectComp.serverIP, self.connectComp.serverPort))
         server.listen(8)
@@ -50,11 +57,15 @@ class ServerPerception(threading.Thread):
         loop = asyncio.get_event_loop()
 
         while not self.threadDataComp.isQuit:
-            try:
-                client, _ = await loop.sock_accept(server)
-                loop.create_task(self.handle_client(client))
-            except Exception as ex:
-                print("[Server] ", ex)
+            if (self.mqttComp.createUDPTask):
+                try:
+                    print("[Server4Yolop]: Create socket")
+                    client, _ = await loop.sock_accept(server)
+                    loop.create_task(self.handle_client(client))
+                    self.mqttComp.createUDPTask = False
+                except Exception as ex:
+                    print("[Server] ", ex)
+
 
     async def handle_client(self, client):
         loop = asyncio.get_event_loop()

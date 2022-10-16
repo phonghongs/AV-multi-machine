@@ -9,6 +9,7 @@ import socket
 import struct
 import time
 from multiple import *
+import common
 
 global pre, raw_image
 pre = time.time()
@@ -19,6 +20,28 @@ print(type(raw_image))
 MAX_DGRAM = 2**16
 
 CLIENT_ID = "JETSON1"
+
+def inference_seg(out2):
+    '''
+    input: outs[2] of backbone
+    output: 1 array 
+    '''
+    with engine.create_execution_context() as context:
+        h_inputs, h_outputs, bindings, stream = common.allocate_buffers(engine)
+        h_inputs[0].host = out2
+        trt_outputs = common.do_inference_v2(context, bindings=bindings, inputs=h_inputs, outputs=h_outputs, stream=stream)
+        trt_outputs[0] = np.reshape(trt_outputs[0],(1,2,384,640))
+    return trt_outputs[0]
+
+def load_engine(trt_file_path, verbose=False):
+    """Build a TensorRT engine from a TRT file."""
+    TRT_LOGGER = trt.Logger(trt.Logger.VERBOSE) if verbose else trt.Logger()
+    print('Loading TRT file from path {}...'.format(trt_file_path))
+    with open(trt_file_path, 'rb') as f, trt.Runtime(TRT_LOGGER) as runtime:
+        engine = runtime.deserialize_cuda_engine(f.read())
+    return engine
+
+engine = load_engine('trt8/seg_16.trt', False)
 
 def main():
     # Set up socket
@@ -34,7 +57,7 @@ def main():
 
     print("OK")
     while time.time() - pre < 20:
-        pre = time.time()
+        # pres = time.time()
         s.send(CLIENT_ID.encode('utf8'))
         bs = s.recv(8)
         (length,) = struct.unpack('>Q', bs)
@@ -49,12 +72,14 @@ def main():
 
         result = np.frombuffer(data, dtype=np.uint8).reshape(1, 256, 48, 80)
         try:
-            color_area = post_process_seg(torch.tensor(result))
+            out = 0.039736519607843135*(result - 9.0)
+            out_seg = inference_seg(out.astype('float32'))
+            color_area = post_process_seg(torch.tensor(out_seg))
             output.write(color_area)
         except Exception as e:
             print(e)
 
-        print((time.time() - pre), data == raw_image)
+        # print((time.time() - pre), data == raw_image)
 
     output.release()
     s.send("quit".encode('utf8'))
