@@ -11,12 +11,40 @@ import time
 from multiple import *
 import common
 
-global pre, raw_image
+import threading
+
+from Script.MqttController.MQTTController import MQTTClientController
+from Script.Component.MQTTComp import MQTTComp
+from Script.Component.ThreadDataComp import ThreadDataComp
+from queue import Queue
+
+global pre, mqttComp
 pre = time.time()
 
-raw_image = np.load('testtensor.npy').tobytes()
+global threadDataComp, connectComp
+threadDataComp = ThreadDataComp(
+    Queue(maxsize=3),   #Image Queue
+    Queue(maxsize=3),   #Transform Queue
+    Queue(),   #Quanta Queue
+    Queue(),            #Total Time Queue
+    threading.Condition(),  
+    threading.Condition(),
+    threading.Condition(),
+    threading.Lock(),    
+    '/home/tx2/AV-multi-machine/inference/videos/data_test.mp4',
+    'jetson-trt/bb.trt',
+    False,
+    [],
+)
 
-print(type(raw_image))
+mqttComp = MQTTComp(
+    '192.168.1.51',
+    '1883',
+    'Multiple_Machine/#',
+    False,
+    False
+)
+
 MAX_DGRAM = 2**16
 
 CLIENT_ID = "JETSON1"
@@ -44,46 +72,55 @@ def load_engine(trt_file_path, verbose=False):
 engine = load_engine('trt8/seg_16.trt', False)
 
 def main():
-    # Set up socket
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('192.168.1.91', 5555))
-    done = False
 
-    output = cv2.VideoWriter('filename.avi', 
-                         cv2.VideoWriter_fourcc(*'MJPG'),
-                         10, (1280, 720))
+    mqttController = MQTTClientController(mqttComp, threadDataComp, 'TX2')
+    mqttController.client.loop_start()
 
-    pre = time.time()
+    while not threadDataComp.isQuit:
+        if (mqttComp.createUDPTask):
+            time.sleep(0.5)
+            # Set up socket
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect(('192.168.1.91', 5555))
+            done = False
 
-    print("OK")
-    while time.time() - pre < 20:
-        # pres = time.time()
-        s.send(CLIENT_ID.encode('utf8'))
-        bs = s.recv(8)
-        (length,) = struct.unpack('>Q', bs)
-        
-        data = b''
-        while len(data) < length:
-            # doing it in batches is generally better than trying
-            # to do it all in one go, so I believe.
-            to_read = length - len(data)
-            data += s.recv(
-                MAX_DGRAM if to_read > MAX_DGRAM else to_read)
+            output = cv2.VideoWriter('filename.avi', 
+                                cv2.VideoWriter_fourcc(*'MJPG'),
+                                10, (1280, 720))
 
-        result = np.frombuffer(data, dtype=np.uint8).reshape(1, 256, 48, 80)
-        try:
-            out = 0.039736519607843135*(result - 9.0)
-            out_seg = inference_seg(out.astype('float32'))
-            color_area = post_process_seg(torch.tensor(out_seg))
-            output.write(color_area)
-        except Exception as e:
-            print(e)
+            pre = time.time()
 
-        # print((time.time() - pre), data == raw_image)
+            print("OK")
+            while time.time() - pre < 20:
+                # pres = time.time()
+                s.send(CLIENT_ID.encode('utf8'))
+                bs = s.recv(8)
+                (length,) = struct.unpack('>Q', bs)
+                
+                data = b''
+                while len(data) < length:
+                    # doing it in batches is generally better than trying
+                    # to do it all in one go, so I believe.
+                    to_read = length - len(data)
+                    data += s.recv(
+                        MAX_DGRAM if to_read > MAX_DGRAM else to_read)
 
-    output.release()
-    s.send("quit".encode('utf8'))
-    s.close()
+                result = np.frombuffer(data, dtype=np.uint8).reshape(1, 256, 48, 80)
+                try:
+                    out = 0.039736519607843135*(result - 9.0)
+                    out_seg = inference_seg(out.astype('float32'))
+                    color_area = post_process_seg(torch.tensor(out_seg))
+                    output.write(color_area)
+                except Exception as e:
+                    print(e)
+
+                # print((time.time() - pre), data == raw_image)
+
+
+            output.release()
+            s.send("quit".encode('utf8'))
+            s.close()
+    mqttController.client.loop_stop()
 
 if __name__ == "__main__":
     main()
