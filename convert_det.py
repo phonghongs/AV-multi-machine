@@ -99,17 +99,17 @@ from multiple import *
 def main():
     engine = build_engine(
         'onnx_export/det.onnx')
-    with open('trt8/det_16.trt', 'wb') as f:
+    with open('trt8_tx2/det_16.trt', 'wb') as f:
         f.write(engine.serialize())
         
     engine = build_engine(
         'onnx_export/backbone.onnx')
-    with open('trt8/bb_16.trt', 'wb') as f:
+    with open('trt8_tx2/bb_16.trt', 'wb') as f:
         f.write(engine.serialize())
         
     engine = build_engine(
         'onnx_export/seg.onnx')
-    with open('trt8/seg_16.trt', 'wb') as f:
+    with open('trt8_tx2/seg_16.trt', 'wb') as f:
         f.write(engine.serialize())
     # model = backbone()
     # model.eval()

@@ -16,6 +16,7 @@ import threading
 from Script.MqttController.MQTTController import MQTTClientController
 from Script.Component.MQTTComp import MQTTComp
 from Script.Component.ThreadDataComp import ThreadDataComp
+from Script.Component.ConnectComp import ConnectComp
 from queue import Queue
 
 global pre, mqttComp
@@ -45,6 +46,12 @@ mqttComp = MQTTComp(
     False
 )
 
+connectComp = ConnectComp(
+    '192.168.1.91',
+    5555,
+    False
+)
+
 MAX_DGRAM = 2**16
 
 CLIENT_ID = "JETSON1"
@@ -69,30 +76,31 @@ def load_engine(trt_file_path, verbose=False):
         engine = runtime.deserialize_cuda_engine(f.read())
     return engine
 
-engine = load_engine('trt8/seg_16.trt', False)
+engine = load_engine('trt8_tx2/seg_16.trt', False)
 
 def main():
 
-    mqttController = MQTTClientController(mqttComp, threadDataComp, 'TX2')
+    mqttController = MQTTClientController(mqttComp, threadDataComp, 'Seg')
     mqttController.client.loop_start()
 
     while not threadDataComp.isQuit:
         if (mqttComp.createUDPTask):
+            mqttComp.createUDPTask = False
             time.sleep(0.5)
             # Set up socket
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect(('192.168.1.91', 5555))
+            s.connect((connectComp.serverIP, connectComp.serverPort))
             done = False
 
             output = cv2.VideoWriter('filename.avi', 
                                 cv2.VideoWriter_fourcc(*'MJPG'),
-                                10, (1280, 720))
-
-            pre = time.time()
+                                10, (640, 360))
 
             print("OK")
-            while time.time() - pre < 20:
-                # pres = time.time()
+            preeee = time.time()
+            while time.time() - preeee < 100:
+                pre = time.time()
+                pres = time.time()
                 s.send(CLIENT_ID.encode('utf8'))
                 bs = s.recv(8)
                 (length,) = struct.unpack('>Q', bs)
@@ -106,20 +114,28 @@ def main():
                         MAX_DGRAM if to_read > MAX_DGRAM else to_read)
 
                 result = np.frombuffer(data, dtype=np.uint8).reshape(1, 256, 48, 80)
+                print((time.time() - pres), "buffer")
                 try:
-                    out = 0.039736519607843135*(result - 9.0)
-                    out_seg = inference_seg(out.astype('float32'))
+                    pres = time.time()
+                    out = 0.039736519607843135*(result - 9.0).astype('float32')
+                    print((time.time() - pres), "dequanta")
+                    pres = time.time()
+                    out_seg = inference_seg(out)
+                    print((time.time() - pres), "infer")
+                    pres = time.time()
                     color_area = post_process_seg(torch.tensor(out_seg))
+                    print((time.time() - pres), "post")
                     output.write(color_area)
                 except Exception as e:
                     print(e)
 
-                # print((time.time() - pre), data == raw_image)
+                # print((time.time() - pre))
 
 
             output.release()
             s.send("quit".encode('utf8'))
             s.close()
+            break
     mqttController.client.loop_stop()
 
 if __name__ == "__main__":

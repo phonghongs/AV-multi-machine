@@ -51,7 +51,7 @@ def quantize(a):
     a = np.round_((1/c)*a-d)
     return a.astype('uint8'), c, d
 
-engine = load_engine('jetson-trt/seg.trt', False)
+engine = load_engine('trt8_tx2/seg_16.trt', False)
 
 def inference_seg(out2):
     '''
@@ -67,17 +67,22 @@ def inference_seg(out2):
 
 def main():
     img, img_det, shapes = load_img(
-        '/home/ceec/AV-multi-machine/inference/images/0ace96c3-48481887.jpg')
+        '/home/tx21/AV-multi-machine/inference/images/3c0e7240-96e390d2.jpg')
     img = transform(img)
     if img.ndimension() == 3:
         img = img.unsqueeze(0)
-    out2 = np.load('testtensor.npy')
+    out2 = np.load('outs2.npy')
     #truyen out 2 vao
-    out_seg = inference_seg(out2)
-    
-    print(type(img), img.dtype, shapes)
+    pre_check = time.time()
+    while time.time() - pre_check < 10:
+        pre = time.time()
+        out_seg = inference_seg(out2)
+        print(time.time() - pre)
 
-    color_area = post_process_seg( torch.tensor(out_seg), img, shapes)
-    cv2.imwrite('test_trt2_seg_a.jpg', color_area)
+        pre = time.time()
+        color_area = post_process_seg( torch.tensor(out_seg))
+        print(time.time() - pre)
+        print("++++++++++++++++++++++++++++++++++++++")
+        cv2.imwrite('test_trt2_seg_a.jpg', color_area)
 if __name__ =='__main__':
     main()
