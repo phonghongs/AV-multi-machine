@@ -69,30 +69,13 @@ def main():
     serverPerception.start()
     inferenceTask.run()
 
-    # time.sleep(10)
-
-    threadDataComp.isQuit = True
-
-    while not threadDataComp.ImageQueue.empty():
-        threadDataComp.ImageQueue.get()
-    
-    while not threadDataComp.TransformQueue.empty():
-        threadDataComp.TransformQueue.get()
-
-    while not threadDataComp.QuantaQueue.empty():
-        threadDataComp.QuantaQueue.get()
-
-    threadDataComp.ImageQueue.put(None)
-    threadDataComp.TransformQueue.put(None)
-    threadDataComp.QuantaQueue.put(None)
-
-    mqttController.client.loop_stop()
-
     readImageTask.join()
     tranformTask.join()
     quantaTask.join()
     serverPerception.delInstance()
     serverPerception.join()
+
+    mqttController.client.loop_stop()
 
     timeSize = threadDataComp.totalTime.qsize()
     count = 0

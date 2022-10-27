@@ -56,3 +56,15 @@ class MQTTClientController():
         elif (msgContent == "quit"):
             print("quit")
             self.threadDataComp.isQuit = True
+            while not self.threadDataComp.ImageQueue.empty():
+                self.threadDataComp.ImageQueue.get()
+            
+            while not self.threadDataComp.TransformQueue.empty():
+                self.threadDataComp.TransformQueue.get()
+
+            while not self.threadDataComp.QuantaQueue.empty():
+                self.threadDataComp.QuantaQueue.get()
+
+            self.threadDataComp.ImageQueue.put(None)
+            self.threadDataComp.TransformQueue.put(None)
+            self.threadDataComp.QuantaQueue.put(None)

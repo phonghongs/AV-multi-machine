@@ -66,22 +66,6 @@ def main():
     posprocessSeg.start()
     inferenceSeg.run()
 
-    
-    threadDataComp.isQuit = True
-
-    while not threadDataComp.ImageQueue.empty():
-        threadDataComp.ImageQueue.get()
-    
-    while not threadDataComp.TransformQueue.empty():
-        threadDataComp.TransformQueue.get()
-
-    while not threadDataComp.QuantaQueue.empty():
-        threadDataComp.QuantaQueue.get()
-
-    threadDataComp.ImageQueue.put(None)
-    threadDataComp.TransformQueue.put(None)
-    threadDataComp.QuantaQueue.put(None)
-
     # inferenceSeg.join()
     inferenceSeg.delInstance()
     posprocessSeg.join()

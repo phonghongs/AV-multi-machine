@@ -58,5 +58,5 @@ class InferenceSegment():
                 print("[InferenceSeg]: Error when inference Segment : ", e)
         print("[InferenceSeg]: Total Time : ", totalTime/timecount)
 
-    def __del__(self):
+    def delInstance(self):
         del self.engine
