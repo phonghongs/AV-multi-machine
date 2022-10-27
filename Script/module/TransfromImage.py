@@ -16,6 +16,7 @@ class TransfromImage(threading.Thread):
         self.transform = transforms.Compose([
             transforms.ToTensor(),
             self.normalize,
+            transforms.Resize((384, 640))
         ])
 
     def run(self):
@@ -32,6 +33,7 @@ class TransfromImage(threading.Thread):
                 break
 
             img = self.transform(getImage[0])
+
             img = img.float()
             if img.ndimension() == 3:
                 img = img.unsqueeze(0)

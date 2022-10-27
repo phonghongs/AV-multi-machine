@@ -41,13 +41,14 @@ class ReadImage(threading.Thread):
         # img0 = cap.read(cv2.IMREAD_COLOR |
         #                 cv2.IMREAD_IGNORE_ORIENTATION)
         ret, img0 = self.videoCap.read()
-        pre = time.time()
-        img = cv2.resize(img0, (640, 384),cv2.INTER_LINEAR)
-        # print("[ReadImage]: ", time.time() - pre)
+        # pre = time.time()
+        # img = cv2.resize(img0, (640, 384),cv2.INTER_LINEAR)
+        # # print("[ReadImage]: ", time.time() - pre)
         # h0, w0 = img0.shape[:2]
 
         # img, ratio, pad = letterbox_for_img(img0.copy(), new_shape=640, auto=True)
         # h, w = img.shape[:2]
         # shapes = (h0, w0), ((h / h0, w / w0), pad)
+        # print(shapes)
         # img = np.ascontiguousarray(img)
-        return [img, img0]
+        return [img0]

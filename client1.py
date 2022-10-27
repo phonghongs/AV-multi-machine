@@ -32,7 +32,7 @@ threadDataComp = ThreadDataComp(
     threading.Condition(),
     threading.Condition(),
     threading.Lock(),    
-    '/home/tx2/AV-multi-machine/inference/videos/data_test.mp4',
+    '/home/tx2/AV-multi-machine/inference/videos/VideoCamGolfCar_2_Trim_Trim.mp4',
     'jetson-trt/bb.trt',
     False,
     [],

@@ -57,14 +57,14 @@ class ServerPerception(threading.Thread):
         loop = asyncio.get_event_loop()
 
         while not self.threadDataComp.isQuit:
-            if (self.mqttComp.createUDPTask):
-                try:
-                    print("[Server4Yolop]: Create socket")
-                    client, _ = await loop.sock_accept(server)
-                    loop.create_task(self.handle_client(client))
-                    self.mqttComp.createUDPTask = False
-                except Exception as ex:
-                    print("[Server] ", ex)
+            # if (self.mqttComp.createUDPTask):
+            try:
+                print("[Server4Yolop]: Create socket")
+                client, _ = await loop.sock_accept(server)
+                loop.create_task(self.handle_client(client))
+                self.mqttComp.createUDPTask = False
+            except Exception as ex:
+                print("[Server] ", ex)
 
 
     async def handle_client(self, client):
