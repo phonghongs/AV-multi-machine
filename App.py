@@ -23,7 +23,7 @@ threadDataComp = ThreadDataComp(
     threading.Condition(),
     threading.Condition(),
     threading.Lock(),    
-    '/home/tx2/AV-multi-machine/inference/videos/UIT_HanThuyenResize.avi',
+    'inference/videos/data_test.mp4',
     'jetson-trt/bb.trt',
     False,
     [],

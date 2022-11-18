@@ -33,7 +33,7 @@ threadDataComp = ThreadDataComp(
     threading.Condition(),
     threading.Condition(),
     threading.Lock(),    
-    '/home/tx2/AV-multi-machine/inference/videos/data_test.mp4',
+    'inference/videos/data_test.mp4',
     'trt8_tx2/seg_16.trt',
     False,
     [],
