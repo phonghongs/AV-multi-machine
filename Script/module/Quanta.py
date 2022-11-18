@@ -37,6 +37,8 @@ class Quanta(threading.Thread):
 
     def run(self):
         print(threading.currentThread().getName())
+        timecount = 0.00001
+        totalTime = 0
         while not self.threadDataComp.isQuit:
             pre = time.time()
 
@@ -59,4 +61,6 @@ class Quanta(threading.Thread):
             with self.threadDataComp.OutputCondition:
                 self.threadDataComp.output = output
 
-            self.threadDataComp.totalTime.put(time.time() - pre)
+            timecount += 1
+            totalTime += time.time() - pre
+        print("[Quanta]: Total Time : ", totalTime/timecount)

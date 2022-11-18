@@ -56,7 +56,8 @@ class Inference():
 
     def run(self):
         print(threading.currentThread().getName())
-
+        timecount = 0.00001
+        totalTime = 0
         while not self.threadDataComp.isQuit:
             pre = time.time()
 
@@ -83,8 +84,9 @@ class Inference():
             #     if self.threadDataComp.QuantaQueue.qsize() > 0:
             #         self.threadDataComp.QuantaCondition.notifyAll()
 
-            # self.threadDataComp.totalTime.put(time.time() - pre)
-            # print("[Inference] Total Time", time.time() - pre)
+            timecount += 1
+            totalTime += time.time() - pre
+        print("[Inference]: Total Time : ", totalTime/timecount)
 
     def __del__(self):
         del self.engine

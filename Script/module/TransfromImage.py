@@ -21,6 +21,8 @@ class TransfromImage(threading.Thread):
 
     def run(self):
         print(threading.currentThread().getName())
+        timecount = 0.00001
+        totalTime = 0
         while not self.threadDataComp.isQuit:
             pre = time.time()
 
@@ -49,3 +51,6 @@ class TransfromImage(threading.Thread):
             # self.threadDataComp.totalTime.put(time.time() - pre)
 
             # print("[Transform] Timer ", time.time() - pre)
+            timecount += 1
+            totalTime += time.time() - pre
+        print("[Transform]: Total Time : ", totalTime/timecount)

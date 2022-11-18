@@ -15,6 +15,9 @@ class ReadImage(threading.Thread):
 
     def run(self):
         print(threading.currentThread().getName())
+
+        timecount = 0.00001
+        totalTime = 0
         while not self.threadDataComp.isQuit:
             pre = time.time()
             result = []
@@ -36,6 +39,9 @@ class ReadImage(threading.Thread):
             # self.threadDataComp.totalTime.put(time.time() - pre)
             # print("[ReadImage] Done at: ", time.time() - pre)
             # logging.debug("Done at: %s", time.time() - pre)
+            timecount += 1
+            totalTime += time.time() - pre
+        print("[ReadImage]: Total Time : ", totalTime/timecount)
 
     def load_img(self):
         # img0 = cap.read(cv2.IMREAD_COLOR |

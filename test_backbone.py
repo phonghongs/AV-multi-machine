@@ -52,15 +52,27 @@ def load_engine(trt_file_path, verbose=False):
     with open(trt_file_path, 'rb') as f, trt.Runtime(TRT_LOGGER) as runtime:
         engine = runtime.deserialize_cuda_engine(f.read())
     return engine
+# def quantize(a):
+#     maxa,mina=np.max(a),np.min(a)
+#     c = (maxa- mina)/(255)
+#     d = np.round_((mina*255)/(maxa - mina))
+#     a = np.round_((1/c)*a-d)
+#     print(c, d)
+#     return a.astype('uint8'), c, d
+
+
 def quantize(a):
-    maxa,mina=np.max(a),np.min(a)
+    # maxa,mina=np.max(a),np.min(a)
+    maxa, mina = 9.7578125, -0.375
     c = (maxa- mina)/(255)
     d = np.round_((mina*255)/(maxa - mina))
     a = np.round_((1/c)*a-d)
-    print(c, d)
-    return a.astype('uint8'), c, d
+    # f = max(f, maxa)
+    # g = min(g, mina)
+    # print(self.f, self.g)
+    return a.astype('uint8')
 
-engine = load_engine('trt8_tx2/bb_16.trt', False)
+engine = load_engine('jetson-trt/bb.trt', False)
 
 h_inputs, h_outputs, bindings, stream = common.allocate_buffers(engine)
 def inference_bb(img):
@@ -81,23 +93,28 @@ def main():
     # img_original, img_det, shapes = load_img(
     #     '/home/tx2/YOLOP/inference/images/0ace96c3-48481887.jpg')
     
-    cap = cv2.VideoCapture('/home/tx21/AV-multi-machine/inference/videos/data_test.mp4')
+    cap = cv2.VideoCapture('/home/tx2/AV-multi-machine/inference/videos/UIT_HanThuyenResize.avi')
 
-    pre = 0
+    pre_count = time.time()
+    timecount = 0.00001
+    totalTime = 0
+    while time.time() - pre_count < 10:
+        pre = time.time()
+        img_original, img_det, shapes = load_img(cap)
+        img = transform(img_original)
+        img = img.float()
+        if img.ndimension() == 3:
+            img = img.unsqueeze(0)
 
-    # while True:
-    pre = time.time()
-    img_original, img_det, shapes = load_img(cap)
-    img = transform(img_original)
-    img = img.float()
-    if img.ndimension() == 3:
-        img = img.unsqueeze(0)
+        outs = inference_bb(img.numpy())
+        out2 = quantize(outs[2])
+        print(time.time() - pre)
+        timecount += 1
+        totalTime += time.time() - pre
+        cv2.imwrite("phong.png", img_original)
+        np.save('outs2.npy', out2)    
+        
+    print("[Test Backbone]: Total Time : ", totalTime/timecount)
 
-    outs = inference_bb(img.numpy())
-    
-    cv2.imwrite("phong.png", img_original)
-    np.save('outs2.npy', outs[2])    
-
-    print(time.time() - pre)
 if __name__ =='__main__':
     main()
