@@ -12,7 +12,7 @@ class PostProcessSeg(threading.Thread):
         threading.Thread.__init__(self, args=(), kwargs=None)
         self.threadDataComp = _threadDataComp
         self.daemon = True
-        self.output = cv2.VideoWriter('out1.avi', 
+        self.output = cv2.VideoWriter('outuit.avi', 
                                 cv2.VideoWriter_fourcc(*'MJPG'),
                                 10, (640, 360))
 
@@ -21,10 +21,14 @@ class PostProcessSeg(threading.Thread):
 
         timecount = 0.00001
         totalTime = 0
-
+        firstTime = True
         while not self.threadDataComp.isQuit:
-            getSeg = self.threadDataComp.TransformQueue.get()
             pre = time.time()
+            getSeg = self.threadDataComp.TransformQueue.get()
+            if (firstTime):
+                pre = time.time()
+                firstTime = False
+
             if getSeg is None:
                 print("[TransFromImage] Error when get Image in queue")
                 break
@@ -49,6 +53,7 @@ class PostProcessSeg(threading.Thread):
                     (da_seg_mask.shape[0], da_seg_mask.shape[1], 3), dtype=np.uint8)
                 color_area[da_seg_mask == 1] = [0, 255, 0]
                 self.output.write(color_area)
+                # print("[TransformImage]: ", time.time() - pre)
                 # self.threadDataComp.QuantaQueue.put(da_seg_mask)
                 timecount += 1
                 totalTime += time.time() - pre

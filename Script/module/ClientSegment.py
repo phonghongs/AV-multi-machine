@@ -56,7 +56,7 @@ class ClientSegment(threading.Thread):
 
                     result = np.frombuffer(data, dtype=np.uint8).reshape(1, 256, 48, 80)
                     out = 0.039736519607843135*(result - 9.0).astype('float32') #dequanta
-                    # print("[ClientSegment]: ", time.time() - pre)
+                    # print("[ClientSegment]: ", time.time() - pre, self.threadDataComp.ImageQueue.full)
 
                     self.threadDataComp.ImageQueue.put(out)
                     timecount += 1
