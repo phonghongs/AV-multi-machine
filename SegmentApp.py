@@ -20,6 +20,7 @@ from Script.Component.ConnectComp import ConnectComp
 from Script.module.ClientSegment import ClientSegment
 from Script.module.InferenceSeg import InferenceSegment
 from Script.module.PostProcessSeg import PostProcessSeg
+from Script.module.PlanningSystem import PlanningSystem
 
 from queue import Queue
 
@@ -27,7 +28,7 @@ global threadDataComp, connectComp, mqttComp
 threadDataComp = ThreadDataComp(
     Queue(maxsize=3),   #Image Queue
     Queue(maxsize=3),   #Transform Queue
-    Queue(),   #Quanta Queue
+    Queue(maxsize=3),   #Quanta Queue
     Queue(),            #Total Time Queue
     threading.Condition(),  
     threading.Condition(),
@@ -61,15 +62,18 @@ def main():
     clientSegment = ClientSegment(threadDataComp, mqttComp, connectComp)
     inferenceSeg = InferenceSegment(threadDataComp)
     posprocessSeg = PostProcessSeg(threadDataComp)
+    planningSeg = PlanningSystem(threadDataComp)
 
     clientSegment.start()
     posprocessSeg.start()
+    planningSeg.start()
     inferenceSeg.run()
 
     # inferenceSeg.join()
     inferenceSeg.delInstance()
     posprocessSeg.join()
     clientSegment.join()
+    planningSeg.join()
 
     mqttController.client.loop_stop()
 

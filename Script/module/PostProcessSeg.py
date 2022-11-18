@@ -12,9 +12,6 @@ class PostProcessSeg(threading.Thread):
         threading.Thread.__init__(self, args=(), kwargs=None)
         self.threadDataComp = _threadDataComp
         self.daemon = True
-        self.output = cv2.VideoWriter('outuit.avi', 
-                                cv2.VideoWriter_fourcc(*'MJPG'),
-                                10, (640, 360))
 
     def run(self):
         print(threading.currentThread().getName())
@@ -49,12 +46,7 @@ class PostProcessSeg(threading.Thread):
                 _, da_seg_mask = torch.max(da_seg_mask, 1)
                 da_seg_mask = da_seg_mask.int().squeeze().cpu().numpy()
                 
-                color_area = np.zeros(
-                    (da_seg_mask.shape[0], da_seg_mask.shape[1], 3), dtype=np.uint8)
-                color_area[da_seg_mask == 1] = [0, 255, 0]
-                self.output.write(color_area)
-                # print("[TransformImage]: ", time.time() - pre)
-                # self.threadDataComp.QuantaQueue.put(da_seg_mask)
+                self.threadDataComp.QuantaQueue.put(da_seg_mask)
                 timecount += 1
                 totalTime += time.time() - pre
             except Exception as e:
