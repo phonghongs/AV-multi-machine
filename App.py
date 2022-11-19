@@ -11,42 +11,54 @@ from Script.module.Inference import Inference
 from Script.module.Quanta import Quanta
 from Script.module.Server4Yolop import ServerPerception
 from Script.MqttController.MQTTController import MQTTClientController
+from Script.Utils import PareSystemConfig
 from queue import Queue
 
 global threadDataComp, connectComp, mqttComp
-threadDataComp = ThreadDataComp(
-    Queue(maxsize=3),   #Image Queue
-    Queue(maxsize=3),   #Transform Queue
-    Queue(),   #Quanta Queue
-    Queue(),            #Total Time Queue
-    threading.Condition(),  
-    threading.Condition(),
-    threading.Condition(),
-    threading.Lock(),    
-    'inference/videos/data_test.mp4',
-    'jetson-trt/bb.trt',
-    False,
-    [],
-)
 
-connectComp = ConnectComp(
-    '0.0.0.0',
-    5555,
-    False
-)
+def SetupConfig(config:PareSystemConfig):
+    global threadDataComp, connectComp, mqttComp
+    threadDataComp = ThreadDataComp(
+        Queue(maxsize=3),   #Image Queue
+        Queue(maxsize=3),   #Transform Queue
+        Queue(maxsize=3),   #Quanta Queue
+        Queue(),            #Total Time Queue
+        threading.Condition(),  
+        threading.Condition(),
+        threading.Condition(),
+        threading.Lock(),    
+        config.backboneCfg.videoSource,
+        config.backboneCfg.modelPath,
+        False,
+        [],
+    )
 
-mqttComp = MQTTComp(
-    '192.168.1.51',
-    '1883',
-    'Multiple_Machine/#',
-    False,
-    False
-)
+    mqttComp = MQTTComp(
+        config.mqttCfg.brokerIP,
+        config.mqttCfg.brokerPort,
+        config.mqttCfg.mqttTopic,
+        config.mqttCfg.controlTopic,
+        False,
+        False
+    )
+
+    connectComp = ConnectComp(
+        config.backboneCfg.serverIP,
+        5555,
+        False
+    )
 
 def main():
+    global threadDataComp, connectComp, mqttComp
     FORMAT = "%(asctime)-15s : %(levelname)s : %(threadname)s - %(message)s"
     logging.basicConfig(filename="runtime.log", filemode='w', format=FORMAT)
-    
+    config = PareSystemConfig('config.cfg')
+    if (not config.isHaveConfig):
+        print("[MasterController]: Pareconfig error")
+        exit()
+
+    SetupConfig(config)
+
     mqttController = MQTTClientController(mqttComp, threadDataComp, 'TX2')
     mqttController.client.loop_start()
     readImageTask = ReadImage(threadDataComp)

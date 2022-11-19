@@ -21,41 +21,51 @@ from Script.module.ClientSegment import ClientSegment
 from Script.module.InferenceSeg import InferenceSegment
 from Script.module.PostProcessSeg import PostProcessSeg
 from Script.module.PlanningSystem import PlanningSystem
-
+from Script.Utils import PareSystemConfig
 from queue import Queue
 
 global threadDataComp, connectComp, mqttComp
-threadDataComp = ThreadDataComp(
-    Queue(maxsize=3),   #Image Queue
-    Queue(maxsize=3),   #Transform Queue
-    Queue(maxsize=3),   #Quanta Queue
-    Queue(),            #Total Time Queue
-    threading.Condition(),  
-    threading.Condition(),
-    threading.Condition(),
-    threading.Lock(),    
-    'inference/videos/data_test.mp4',
-    'trt8_tx2/seg_16.trt',
-    False,
-    [],
-)
 
-mqttComp = MQTTComp(
-    '192.168.1.51',
-    '1883',
-    'Multiple_Machine/#',
-    False,
-    False
-)
+def SetupConfig(config:PareSystemConfig):
+    global threadDataComp, connectComp, mqttComp
+    threadDataComp = ThreadDataComp(
+        Queue(maxsize=3),   #Image Queue
+        Queue(maxsize=3),   #Transform Queue
+        Queue(maxsize=3),   #Quanta Queue
+        Queue(),            #Total Time Queue
+        threading.Condition(),  
+        threading.Condition(),
+        threading.Condition(),
+        threading.Lock(),    
+        config.clientSegmentCfg.videoSource,
+        config.clientSegmentCfg.modelPath,
+        False,
+        [],
+    )
 
-connectComp = ConnectComp(
-    '192.168.1.91',
-    5555,
-    False
-)
+    mqttComp = MQTTComp(
+        config.mqttCfg.brokerIP,
+        config.mqttCfg.brokerPort,
+        config.mqttCfg.mqttTopic,
+        config.mqttCfg.controlTopic,
+        False,
+        False
+    )
+
+    connectComp = ConnectComp(
+        config.clientSegmentCfg.serverIP,
+        5555,
+        False
+    )
 
 def main():
+    global threadDataComp, connectComp, mqttComp
+    config = PareSystemConfig('config.cfg')
+    if (not config.isHaveConfig):
+        print("[MasterController]: Pareconfig error")
+        exit()
 
+    SetupConfig(config)
     mqttController = MQTTClientController(mqttComp, threadDataComp, 'Seg')
     mqttController.client.loop_start()
 

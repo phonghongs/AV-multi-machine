@@ -6,5 +6,6 @@ class MQTTComp():
     brokerIP : string
     brokerPort : string
     commandTopic : string
+    controlTopic : string
     connectStatus : bool
     createUDPTask : bool

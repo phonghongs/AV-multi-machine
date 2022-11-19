@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import torchvision.transforms as transforms
 from Script.Component.ThreadDataComp import ThreadDataComp
+from Script.MqttController.MQTTController import MQTTClientController
 
 def warpPers(xP, yP, MP):
     p1 = (MP[0][0]*xP + MP[0][1]*yP + MP[0][2]) / (MP[2][0]*xP + MP[2][1]*yP + MP[2][2])
@@ -11,10 +12,11 @@ def warpPers(xP, yP, MP):
     return [p1, p2]
 
 class PlanningSystem(threading.Thread):
-    def __init__(self,  _threadDataComp: ThreadDataComp):
+    def __init__(self,  _threadDataComp: ThreadDataComp, _mqttController: MQTTClientController):
         threading.Thread.__init__(self, args=(), kwargs=None)
         self.threadDataComp = _threadDataComp
         self.daemon = True
+        self.mqttController = _mqttController
         self.kerel5 = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
         self.src = np.float32([[0, 256], [512, 256], [0, 0], [512, 0]])
         self.dst = np.float32([[200, 256], [312, 256], [0, 0], [512, 0]])
@@ -78,7 +80,7 @@ class PlanningSystem(threading.Thread):
 
             cv2.circle(blank_image, (cX, cY), 7, (255, 255, 255), -1)
 
-
+            self.mqttController.publish_controller(cX, cY)
             print("[TransformImage]: ", time.time() - prepre)
             # print(output[2].dtype, type(output[2]), output[2].shape)
             with self.threadDataComp.OutputCondition:
