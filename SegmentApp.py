@@ -72,7 +72,7 @@ def main():
     clientSegment = ClientSegment(threadDataComp, mqttComp, connectComp)
     inferenceSeg = InferenceSegment(threadDataComp)
     posprocessSeg = PostProcessSeg(threadDataComp)
-    planningSeg = PlanningSystem(threadDataComp)
+    planningSeg = PlanningSystem(threadDataComp, mqttController)
 
     clientSegment.start()
     posprocessSeg.start()
