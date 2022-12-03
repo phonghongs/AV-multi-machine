@@ -1,95 +1,141 @@
+#! /usr/bin/python
+# -*- coding: utf-8 -*-
 """
-
+Kinematic Bicycle Model
 
 author Atsushi Sakai
 """
 
 import math
-
+import time
+import json
 dt = 0.1  # [s]
-L = 1.5  # [m]
+L = 2.9  # [m]
+Lr = 1.4  # [m]
 
 
 class State:
 
-    def __init__(self, x=0.0, y=0.0, yaw=0.0, v=0.0, cte=0.0, epsi=0.0):
+    def __init__(self, x=Lr, y=0.0, yaw=0.0, v=0.0, beta=0.0):
         self.x = x
         self.y = y
         self.yaw = yaw
         self.v = v
-        self.cte = cte
-        self.epsi = epsi
+        self.beta = beta
 
 
-def update(state, a, delta, errors):
+def update(state, a, delta):
 
-    state.x = state.x + state.v * math.cos(state.yaw) * dt
-    state.y = state.y + state.v * math.sin(state.yaw) * dt
-    state.yaw = state.yaw + state.v / L * delta * dt
+    state.beta = math.atan2(Lr / L * math.tan(delta), 1.0)
+
+    state.x = state.x + state.v * math.cos(state.yaw + state.beta) * dt
+    state.y = state.y + state.v * math.sin(state.yaw + state.beta) * dt
+    state.yaw = state.yaw + state.v / Lr * math.sin(state.beta) * dt
     state.v = state.v + a * dt
-    state.cte = errors[0] - state.y + state.v*math.sin(state.epsi)*dt
-    state.epsi = state.yaw - errors[1] + state.v*delta/L*dt
-    
+
+    #  print(state.x, state.y, state.yaw, state.v)
+
     return state
 
-def meanSquare(cte, epsi):
-    # total = 0
-    # for i in range(len(cte)):
-    #     total += pow(cte + epsi, 2)
-    # return total
-    total = pow(cte + epsi, 2)
-    return total
-
-def calinput(p1, p2):
-    lech = p2[0] - p1[0]
-    goc = math.atan(lech/abs(p2[1] - p1[1])) * 57.2958
-    return [lech, goc]
 
 if __name__ == '__main__':
-    print("start unicycle simulation")
+    print("start Kinematic Bicycle model simulation")
     import matplotlib.pyplot as plt
+    import numpy as np
 
-    T = 100
-    a = [1.0] * T
-    delta = [math.radians(1.0)] * T
-    #  print(delta)
+    T = 20
+    a = [0] * T
+    delta = [math.radians(10.0)] * T
     #  print(a, delta)
 
-    target = [[0, 0], [1, 5], [2, 7]]
 
-    min = 9999999
+    x = []
+    y = []
+    yaw = []
+    v = []
+    beta = []
+    times = []
+    times = []
+    t = 0.0
+    
+
     result = []
-    for i in range(-25, 25):
-        state = State()
-        state = update(state, 1, i, calinput(target[0], target[1]))
-        state = update(state, 1, i, calinput(target[1], target[2]))
-        if (meanSquare(state.cte, state.epsi) < min):
-            min = meanSquare(state.cte, state.epsi)
-            result = [1, i]
 
-    print(result)
-    # state = State()
+    for index in range (5, 16, 5):
+        x_total = []
+        y_total = []
+        resultInSpeed = dict()
+        for i in range (-20, 21):
+            state = State(v=index/ 3.6)
 
-    # x = []
-    # y = []
-    # yaw = []
-    # v = []
+            x = [0]
+            y = [0]
+            yaw = []
+            v = []
+            beta = []
+            times = []
+            times = []
+            t = 0.0
 
-    # for (ai, di) in zip(a, delta):
-    #     state = update(state, ai, di)
+            delta = [math.radians(i)] * T
+            for (ai, di) in zip(a, delta):
+                t = t + dt
+                state = update(state, ai, di)
+                x.append(state.x)
+                y.append(state.y)
+                yaw.append(state.yaw)
+                v.append(state.v)
+                beta.append(state.beta)
+                times.append(t)
 
-    #     x.append(state.x)
-    #     y.append(state.y)
-    #     yaw.append(state.yaw)
-    #     v.append(state.v)
+            x_total.append(x)
+            y_total.append(y)
+            pfit = np.polyfit(x, y, 3)
+        
+            resultInSpeed[str(i)] = pfit.tolist()
 
+        # flg, ax = plt.subplots(1)
+        # for (a, b) in zip(x_total, y_total):
+        #     plt.plot(a, b)
+        # plt.xlabel("x[m]")
+        # plt.ylabel("y[m]")
+        # plt.axis("equal")
+        # plt.grid(True)
+        # plt.show()
+        with open(f"planningData_{index}_kmh.txt", "w") as f:
+            json.dump(resultInSpeed, f)
+        result.append(resultInSpeed)
+
+
+
+
+    with open("planningData_15_kmh.txt", "r") as f:
+        data = json.load(f)
+        print("Type:", type(data))
+        print(data.keys())
+        print(np.poly1d(np.array(data['5'])))
+
+        # np.polyfit(x, y, 2)
+    # print(x_total, y_total)
     # flg, ax = plt.subplots(1)
-    # plt.plot(x, y)
+    # for (a, b) in zip(x_total, y_total):
+    #     plt.plot(a, b)
+    # plt.xlabel("x[m]")
+    # plt.ylabel("y[m]")
     # plt.axis("equal")
     # plt.grid(True)
 
+    
+    
+
     # flg, ax = plt.subplots(1)
-    # plt.plot(v)
+    # plt.plot(times, np.array(v) * 3.6)
+    # plt.xlabel("Time[km/h]")
+    # plt.ylabel("velocity[m]")
     # plt.grid(True)
+
+    # #  flg, ax = plt.subplots(1)
+    # #  plt.plot([math.degrees(ibeta) for ibeta in beta])
+    # #  plt.grid(True)
 
     # plt.show()

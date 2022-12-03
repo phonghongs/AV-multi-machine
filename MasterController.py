@@ -17,7 +17,7 @@ class MQTTClientController():
         self.client.on_message = self.on_message
         self.isConnect = False
         self.publishTopic = "Multiple_Machine/Master"
-        self.controlTopic = "Multiple_Machine/Control"
+        self.controlTopic = "Control"
         self.resultSpeed = 1
         self.resultSteering = 1
 
@@ -25,6 +25,7 @@ class MQTTClientController():
     def on_connect(self, client, userdata, flags, rc):
         # reconnect then subscriptions will be renewed.
         self.isConnect = True
+        client.subscribe(self.controlTopic)
     
     def on_disconnect(self, client, userdata, rc):
         print("Dis-Connect")
@@ -34,13 +35,13 @@ class MQTTClientController():
     
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self, client, userdata, msg):
-        # print(msg.topic+" "+str(msg.payload))
+        print(msg.topic+" "+str(msg.payload))
         #control format: speed_angle
-        if msg.topic == "Multiple_Machine/Control":
+        if msg.topic == self.controlTopic:
             msgContent = msg.payload.decode("utf-8").split("_")
             if len(msgContent) > 0:
-                self.resultSpeed = float(msgContent[0])
-                self.resultSteering = float(msgContent[1])
+                self.resultSpeed = (msgContent[0])
+                self.resultSteering = (msgContent[1])
 
     def start_segment(self):
         self.client.publish(self.publishTopic, "newUDP")
