@@ -18,8 +18,8 @@ class PlanningSystem(threading.Thread):
         self.daemon = True
         self.mqttController = _mqttController
         self.kerel5 = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-        self.src = np.float32([[0, 256], [512, 256], [0, 0], [512, 0]])
-        self.dst = np.float32([[200, 256], [312, 256], [0, 0], [512, 0]])
+        self.src = np.float32([[0, 360], [640, 360], [0, 0], [640, 0]])
+        self.dst = np.float32([[200, 360], [440, 360], [0, 0], [640, 0]])
         self.M = cv2.getPerspectiveTransform(self.src, self.dst)
         self.output = cv2.VideoWriter('outuit2.avi', 
                                 cv2.VideoWriter_fourcc(*'MJPG'),
@@ -41,11 +41,8 @@ class PlanningSystem(threading.Thread):
             color_area = np.zeros(
                 (da_seg_mask.shape[0], da_seg_mask.shape[1], 1), dtype=np.uint8)
             color_area[da_seg_mask == 1] = [255]
-
-            thre_mask = cv2.morphologyEx(color_area,cv2.MORPH_DILATE, self.kerel5)
-
-            # conts, hier = cv2.findContours(thre_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-            conts, hier = cv2.findContours(thre_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+            #_____________________ Find contour of segment _____________________
+            conts, hier = cv2.findContours(color_area, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
             cont = sorted(conts, key= lambda area_Index: cv2.contourArea(area_Index) , reverse=True)[0]
             # # print(cont.shape)
             # # print("=================")
@@ -54,34 +51,26 @@ class PlanningSystem(threading.Thread):
             # finalCont : (640, 360) : (x, y) lọc theo x từ trên xuống rồi lọc theo y từ trái qua để ra được [[6, 257], [6, 238], [13, 238], [14, 237], [14, 232], [15, 231]
             finalCont = sorted(finalCont, key= lambda y : y[1], reverse=True)
             finalCont = sorted(finalCont, key= lambda y : y[0])
-            blank_image = np.zeros((da_seg_mask.shape[0], da_seg_mask.shape[1], 3), np.uint8)
 
-            # # print(finalCont)
-
+            #_____________________ Contour Fillter _____________________
+            blank_image = np.zeros((color_area.shape[0], color_area.shape[1]), np.uint8)
             upperLine = []
-            upperLine.append([0, da_seg_mask.shape[0]])
-
+            upperLine.append([0, color_area.shape[0]])
             lastY = finalCont[0][1]
             for i in range(0, finalCont.__len__() - 1):
                 if (finalCont[i][0] != finalCont[i+1][0]):
                     upperLine.append(finalCont[i])
             upperLine.append(finalCont[-1])
-            # upperLine.append([finalCont[-1][0], heigh])
-            upperLine.append([da_seg_mask.shape[1], da_seg_mask.shape[0]])
-            # upperLine = sorted(upperLine, key= lambda y : y[1])
+            upperLine.append([color_area.shape[1], color_area.shape[0]])
             upperLine = np.array(upperLine)
-            # print(upperLine.shape, type(upperLine))
-            # print(upperLine)
-
+            #_____________________ Find segment Center  _____________________
             cv2.fillPoly(blank_image, pts = [upperLine], color =255)
-            M = cv2.moments(upperLine)
-            cX = int(M["m10"] / M["m00"])
-            cY = int(M["m01"] / M["m00"])
+            conts, hier = cv2.findContours(blank_image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+            cont = sorted(conts, key= lambda area_Index: cv2.contourArea(area_Index) , reverse=True)[0]
+            finalCont = [cnt[0] for cnt in cont.tolist()]
 
-            cv2.circle(blank_image, (cX, cY), 7, (255, 255, 255), -1)
-
-            self.mqttController.publish_controller(cX, cY)
-            print("[TransformImage]: ", time.time() - prepre)
+            self.mqttController.publish_controller(str(finalCont))
+            # print("[TransformImage]: ", time.time() - prepre)
             # print(output[2].dtype, type(output[2]), output[2].shape)
             with self.threadDataComp.OutputCondition:
                 self.threadDataComp.output = blank_image

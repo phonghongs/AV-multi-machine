@@ -69,5 +69,5 @@ class MQTTClientController():
             self.threadDataComp.TransformQueue.put(None)
             self.threadDataComp.QuantaQueue.put(None)
 
-    def publish_controller(self, speed, angle):
-        self.client.publish(self.mqttComp.controlTopic, f"{speed}_{angle}")
+    def publish_controller(self, drivableSpace):
+        self.client.publish(self.mqttComp.controlTopic, drivableSpace)

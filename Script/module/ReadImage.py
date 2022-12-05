@@ -26,6 +26,7 @@ class ReadImage(threading.Thread):
             except Exception as ex:
                 print("[ReadImage]: ", ex)
                 self.threadDataComp.isQuit = True
+                self.videoCap.release()
                 break
 
             # if self.threadDataComp.ImageQueue.full():
@@ -47,6 +48,7 @@ class ReadImage(threading.Thread):
         # img0 = cap.read(cv2.IMREAD_COLOR |
         #                 cv2.IMREAD_IGNORE_ORIENTATION)
         ret, img0 = self.videoCap.read()
+
         # pre = time.time()
         # img = cv2.resize(img0, (640, 384),cv2.INTER_LINEAR)
         # # print("[ReadImage]: ", time.time() - pre)

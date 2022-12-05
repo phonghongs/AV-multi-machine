@@ -115,14 +115,14 @@ def planning(image, M, speed):
     upperLine.append(finalCont[-1])
     upperLine.append([image.shape[1], image.shape[0]])
     upperLine = np.array(upperLine)
-
+    # print(upperLine.tolist())
     #_____________________ Find segment Center  _____________________
     cv2.fillPoly(blank_image, pts = [upperLine], color =255)
     conts, hier = cv2.findContours(blank_image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     cont = sorted(conts, key= lambda area_Index: cv2.contourArea(area_Index) , reverse=True)[0]
     finalCont = [cnt[0] for cnt in cont.tolist()]
     result = np.zeros((image.shape[0], image.shape[1]), np.uint8)
-
+    print(finalCont.__len__())
     size = 3
     centers = []
     xBEV = []
@@ -152,7 +152,7 @@ def planning(image, M, speed):
     angle = - model.GetOptimizeSteering(speed*3.6, xList, yList)
     AVControl(25/3.6, angle)
 
-    print(speed, angle, 1 /(time.time() - preTime + 0.00001))
+    # print(speed, angle, 1 /(time.time() - preTime + 0.00001))
 
 
     img = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
