@@ -10,6 +10,8 @@ class BackboneConfig():
                 self.modelPath = configSession['modelPath']
             if 'serverIP' in configSession:
                 self.serverIP = configSession['serverIP']
+            if 'cameraCap' in configSession:
+                self.cameraCap = configSession['cameraCap']
         except Exception as e:
             self.error = True
             print("[BackboneConfig] Error")
