@@ -30,17 +30,19 @@ class PlanningSystem(threading.Thread):
         totalTime = 0
         while not self.threadDataComp.isQuit:
             pre = time.time()
-            prepre = time.time()
 
             da_seg_mask = self.threadDataComp.QuantaQueue.get()
-
+            prepre = time.time()
             if da_seg_mask is None:
                 print("[TransFromImage] Error when get Image in queue")
                 break
 
-            color_area = np.zeros(
-                (da_seg_mask.shape[0], da_seg_mask.shape[1], 1), dtype=np.uint8)
-            color_area[da_seg_mask == 1] = [255]
+            # color_area = np.zeros(
+            #     (da_seg_mask.shape[0], da_seg_mask.shape[1], 1), dtype=np.uint8)
+            
+            # print(type(da_seg_mask), da_seg_mask.shape, da_seg_mask.dtype)
+            # color_area[da_seg_mask == 1] = [255]
+            color_area = da_seg_mask.astype(np.uint8)
             #_____________________ Find contour of segment _____________________
             conts, hier = cv2.findContours(color_area, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
             cont = sorted(conts, key= lambda area_Index: cv2.contourArea(area_Index) , reverse=True)[0]
@@ -70,10 +72,10 @@ class PlanningSystem(threading.Thread):
             finalCont = [cnt[0] for cnt in cont.tolist()]
 
             self.mqttController.publish_controller(str(finalCont))
-            # print("[TransformImage]: ", time.time() - prepre)
+            print("[TransformImage]: ", time.time() - prepre)
             # print(output[2].dtype, type(output[2]), output[2].shape)
-            with self.threadDataComp.OutputCondition:
-                self.threadDataComp.output = blank_image
+            # with self.threadDataComp.OutputCondition:
+            #     self.threadDataComp.output = blank_image
 
             # self.output.write(blank_image)
             timecount += 1

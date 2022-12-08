@@ -47,6 +47,7 @@ class PostProcessSeg(threading.Thread):
                 da_seg_mask = da_seg_mask.int().squeeze().cpu().numpy()
                 
                 self.threadDataComp.QuantaQueue.put(da_seg_mask)
+                # print("[PostProcessSeg]: ", time.time() - pre)
                 timecount += 1
                 totalTime += time.time() - pre
             except Exception as e:
