@@ -91,6 +91,12 @@ def findPathWithVelocity(speed):
 
 def planning(image, M, speed):
     preTime = time.time()
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    color_area = np.zeros(
+        (image.shape[0], image.shape[1], 1), dtype=np.uint8)
+    
+    color_area[image == 255] = [1]
+    image = color_area
     image = cv2.resize(image[170:], (width, heigh))
     # image = cv2.warpPerspective(image, M, (width, heigh))
     #_____________________ Find contour of segment _____________________
@@ -106,6 +112,7 @@ def planning(image, M, speed):
 
     #_____________________ Contour Fillter _____________________
     blank_image = np.zeros((image.shape[0], image.shape[1]), np.uint8)
+    print((image.shape[0], image.shape[1]))
     upperLine = []
     upperLine.append([0, image.shape[0]])
     lastY = finalCont[0][1]
@@ -122,6 +129,12 @@ def planning(image, M, speed):
     cont = sorted(conts, key= lambda area_Index: cv2.contourArea(area_Index) , reverse=True)[0]
     finalCont = [cnt[0] for cnt in cont.tolist()]
     result = np.zeros((image.shape[0], image.shape[1]), np.uint8)
+
+    blank = np.zeros((360, 640), np.uint8)
+    for center in finalCont:
+        cv2.circle(blank, (int(center[0]), int(center[1])), 1, 255, 10)
+    cv2.imshow("IMG", blank)
+
     print(finalCont.__len__())
     size = 3
     centers = []
