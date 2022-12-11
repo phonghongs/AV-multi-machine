@@ -71,11 +71,11 @@ def CalSteeringAngle(dataContour, M):
         if dataContour.__len__() < 100:
             return
         preTime = time.time()
-        blank_image = np.zeros((360, 640), np.uint8)
-        for center in dataContour:
-            cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
-        cv2.imshow("IMG", blank_image)
-        cv2.waitKey(1)
+        # blank_image = np.zeros((360, 640), np.uint8)
+        # for center in dataContour:
+        #     cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
+        # cv2.imshow("IMG", blank_image)
+        # cv2.waitKey(1)
         size = 3
         centers = []
         xBEV = []
@@ -101,9 +101,10 @@ def CalSteeringAngle(dataContour, M):
             # print(xCarAxis, yCarAxis)
             xList.append(xCarAxis)    #640 / 30, / 2 = 10.6665 (center)
             yList.append(yCarAxis)
-
+        total_1 = time.time() - preTime
+        preTime = time.time()
         angle = - model.GetOptimizeSteering(10*3.6, xList, yList)
-        print(angle, time.time() - preTime)
+        print(angle, time.time() - preTime, total_1)
     except Exception as e:
         print("Wait", e)
         time.sleep(0.1)
