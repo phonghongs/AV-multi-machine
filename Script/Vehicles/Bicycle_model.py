@@ -24,6 +24,10 @@ class BicycleModel(threading.Thread):
                 self.steeringData.append(afterConvert)
         print("[BicycleModel]: the Converter is completed")
 
+    def OnDestroy(self):
+        while not self.inputQueue.empty():
+            self.inputQueue.get()
+        self.inputQueue.put(None)
 
     def GetDataAtSpeed(self, speedInput):
         # Calib speed Input to [5, 15]

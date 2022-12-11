@@ -4,16 +4,19 @@ import time
 import logging
 import keyboard
 import configparser
-from Script.Vehicles.car import Car
-from Script.Utils import PareSystemConfig
-from threading import Lock
-from Script.Vehicles.Bicycle_model import BicycleModel
 import json
 import numpy as np
 import cv2
+import threading
+from Script.Vehicles.car import Car
+from Script.Utils import PareSystemConfig
+from threading import Lock
+from queue import Queue
+from Script.Vehicles.Bicycle_model import BicycleModel
+from Script.Component.ThreadDataComp import ThreadDataComp
 
 class MQTTClientController():
-    def __init__(self, _clientName: string, lockMessage : Lock):
+    def __init__(self, _clientName: string, lockMessage : Lock, _threadDataComp: ThreadDataComp):
         self.client = mqtt.Client(_clientName)
         self.client.connect('127.0.0.1')
         self.client.on_connect = self.on_connect
@@ -24,9 +27,8 @@ class MQTTClientController():
         self.isConnect = False
         self.publishTopic = "Multiple_Machine/Master"
         self.controlTopic = "Control"
-        self.resultSpeed = 1
-        self.resultSteering = 1
         self.resultContour = []
+        self.threadDataComp = _threadDataComp
 
     # The callback for when the client receives a CONNACK response from the server.
     def on_connect(self, client, userdata, flags, rc):
@@ -58,6 +60,26 @@ class MQTTClientController():
         self.client.publish(self.publishTopic, "newUDP")
     def force_stop(self):
         self.client.publish(self.publishTopic, "quit")
+        self.threadDataComp.isQuit = True
+
+global threadDataComp
+
+def SetupConfig(config:PareSystemConfig):
+    global threadDataComp, connectComp, mqttComp
+    threadDataComp = ThreadDataComp(
+        Queue(maxsize=3),   #Image Queue
+        Queue(maxsize=3),   #Transform Queue
+        Queue(maxsize=3),   #Quanta Queue
+        Queue(),            #Total Time Queue
+        threading.Condition(),  
+        threading.Condition(),
+        threading.Condition(),
+        threading.Lock(),    
+        config.clientSegmentCfg.videoSource,
+        config.clientSegmentCfg.modelPath,
+        False,
+        [],
+    )
 
 def warpPers(xP, yP, MP):
     p1 = (MP[0][0]*xP + MP[0][1]*yP + MP[0][2]) / (MP[2][0]*xP + MP[2][1]*yP + MP[2][2])
@@ -71,11 +93,11 @@ def CalSteeringAngle(dataContour, M):
         if dataContour.__len__() < 100:
             return
         preTime = time.time()
-        blank_image = np.zeros((360, 640), np.uint8)
-        for center in dataContour:
-            cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
-        cv2.imshow("IMG", blank_image)
-        cv2.waitKey(1)
+        # blank_image = np.zeros((360, 640), np.uint8)
+        # for center in dataContour:
+        #     cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
+        # cv2.imshow("IMG", blank_image)
+        # cv2.waitKey(1)
         size = 3
         centers = []
         xBEV = []
@@ -102,8 +124,8 @@ def CalSteeringAngle(dataContour, M):
             xList.append(xCarAxis)    #640 / 30, / 2 = 10.6665 (center)
             yList.append(yCarAxis)
 
-        angle = - model.GetOptimizeSteering(10*3.6, xList, yList)
-        print(angle, time.time() - preTime)
+        model.inputQueue.put([10*3.6, xList, yList])
+        print("Cal", time.time() - preTime)
     except Exception as e:
         print("Wait", e)
         time.sleep(0.1)
@@ -115,16 +137,21 @@ if __name__ == "__main__":
         print("[MasterController]: Pareconfig error")
         exit()
     
-    lock = Lock()
-    golfcart = Car(config.serialCfg.serialPort, config.serialCfg.seralBaudraet, True)
-    mqttClient = MQTTClientController("Master", lock)
-    mqttClient.client.loop_start()
-
+    SetupConfig(config)
+    
     src = np.float32([[0, 360], [640, 360], [0, 0], [640, 0]])
     dst = np.float32([[220, 360], [400, 360], [0, 0], [640, 0]])
     M = cv2.getPerspectiveTransform(src, dst)
     scaleNumber = 30 # scale với tỉ lệ (640 / 480) , => 32 / 18, cần lấy ở giữa
-    model = BicycleModel()
+
+    lock = Lock()
+    model = BicycleModel(threadDataComp)
+    golfcart = Car(config.serialCfg.serialPort, config.serialCfg.seralBaudraet, True)
+    mqttClient = MQTTClientController("Master", lock, threadDataComp)
+
+    model.start()
+    mqttClient.client.loop_start()
+
     pre = time.time()
     while time.time() - pre < 5 and not mqttClient.isConnect:
         pass
@@ -144,7 +171,9 @@ if __name__ == "__main__":
             mqttClient.isConnect = False
 
         if  golfcart.auto == True:
-            print("predicted_speed, angle: ", mqttClient.resultSpeed, mqttClient.resultSteering)
-            golfcart.RunAuto(mqttClient.resultSpeed, mqttClient.resultSteering)
+            print("predicted_speed, angle: ", 60, model.ouput)
+            golfcart.RunAuto(60, model.ouput)
 
     mqttClient.client.loop_stop()
+    model.OnDestroy()
+    model.join()
