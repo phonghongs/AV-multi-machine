@@ -1,9 +1,17 @@
 import numpy as np
 import json
 import time
+import threading
+from queue import Queue
+from Script.Component.ThreadDataComp import ThreadDataComp
 
-class BicycleModel():
-    def __init__(self):
+class BicycleModel(threading.Thread):
+    def __init__(self,  _threadDataComp: ThreadDataComp):
+        threading.Thread.__init__(self, args=(), kwargs=None)
+        self.inputQueue = Queue()
+        self.threadDataComp = _threadDataComp
+        self.daemon = True
+        self.ouput = 0
         print("[BicycleModel]: Start converting data from file")
         self.steeringData = []
         for i in range(5, 16, 5):
@@ -65,3 +73,11 @@ class BicycleModel():
         
         # print(f"[BicycleModel] Optimize angle: {optimizeAngle}, error: {minError}, time: {time.time()  - pre}")
         return int(optimizeAngle)
+
+    def run(self):
+        while not self.threadDataComp.isQuit:
+            dataInput = self.inputQueue.get()
+            speed = dataInput[0]
+            x = dataInput[1]
+            y = dataInput[2]
+            self.ouput = self.GetOptimizeSteering(speed, x, y)

@@ -7,8 +7,42 @@ import json
 import math
 from numpy.polynomial import Polynomial as P
 from Script.Vehicles.Bicycle_model import BicycleModel
+from Script.Component.ThreadDataComp import ThreadDataComp
+from Script.Utils import PareSystemConfig
 import time
+import threading
+from queue import Queue
 
+
+
+
+global threadDataComp, connectComp, mqttComp
+
+
+
+def SetupConfig(config:PareSystemConfig):
+    global threadDataComp, connectComp, mqttComp
+    threadDataComp = ThreadDataComp(
+        Queue(maxsize=3),   #Image Queue
+        Queue(maxsize=3),   #Transform Queue
+        Queue(maxsize=3),   #Quanta Queue
+        Queue(),            #Total Time Queue
+        threading.Condition(),  
+        threading.Condition(),
+        threading.Condition(),
+        threading.Lock(),    
+        config.clientSegmentCfg.videoSource,
+        config.clientSegmentCfg.modelPath,
+        False,
+        [],
+    )
+
+config = PareSystemConfig('config.cfg')
+if (not config.isHaveConfig):
+    print("[MasterController]: Pareconfig error")
+    exit()
+
+SetupConfig(config)
 heigh = 360
 width = 640
 dt = 0.2  # [s]
@@ -16,7 +50,9 @@ L = 2.9  # [m]
 Lr = 1.4  # [m]
 
 scaleNumber = 30 # scale với tỉ lệ (640 / 480) , => 32 / 18, cần lấy ở giữa
-model = BicycleModel()
+model = BicycleModel(threadDataComp)
+
+model.start()
 
 def warpPers(xP, yP, MP):
     p1 = (MP[0][0]*xP + MP[0][1]*yP + MP[0][2]) / (MP[2][0]*xP + MP[2][1]*yP + MP[2][2])
@@ -162,7 +198,9 @@ def planning(image, M, speed):
         xList.append(xCarAxis)    #640 / 30, / 2 = 10.6665 (center)
         yList.append(yCarAxis)
 
-    angle = - model.GetOptimizeSteering(speed*3.6, xList, yList)
+    model.inputQueue.put([speed*3.6, xList, yList])
+
+    angle = - model.ouput
     AVControl(25/3.6, angle)
 
     # print(speed, angle, 1 /(time.time() - preTime + 0.00001))
@@ -238,7 +276,7 @@ if __name__ == "__main__":
             except Exception as er:
                 print(er)
                 pass
-            
+
             #maxspeed = 90, max steering angle = 25
             # AVControl(speed=10, angle=10)
 
