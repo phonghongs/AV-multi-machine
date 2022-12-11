@@ -124,8 +124,8 @@ def CalSteeringAngle(dataContour, M):
             xList.append(xCarAxis)    #640 / 30, / 2 = 10.6665 (center)
             yList.append(yCarAxis)
 
-        angle = - model.GetOptimizeSteering(10*3.6, xList, yList)
-        print(angle, time.time() - preTime)
+        model.inputQueue.put([10*3.6, xList, yList])
+        print("Cal", time.time() - preTime)
     except Exception as e:
         print("Wait", e)
         time.sleep(0.1)
