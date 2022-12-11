@@ -16,7 +16,7 @@ class BicycleModel(threading.Thread):
         self.steeringData = []
         for i in range(5, 16, 5):
             afterConvert = dict()
-            with open(f"Script\Vehicles\planningData_{i}_kmh.txt", "r") as f:
+            with open(f"Script/Vehicles/planningData_{i}_kmh.txt", "r") as f:
                 data = json.load(f)
                 key = data.keys()
                 for keyelement in key:
