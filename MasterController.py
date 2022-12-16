@@ -93,11 +93,11 @@ def CalSteeringAngle(dataContour, M):
         if dataContour.__len__() < 100:
             return
         preTime = time.time()
-        # blank_image = np.zeros((360, 640), np.uint8)
-        # for center in dataContour:
-        #     cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
-        # cv2.imshow("IMG", blank_image)
-        # cv2.waitKey(1)
+        blank_image = np.zeros((360, 640), np.uint8)
+        for center in dataContour:
+            cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
+        cv2.imshow("IMG", blank_image)
+        cv2.waitKey(1)
         size = 3
         centers = []
         xBEV = []
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     lock = Lock()
     model = BicycleModel(threadDataComp)
-    golfcart = Car(config.serialCfg.serialPort, config.serialCfg.seralBaudraet, True)
+    golfcart = Car(config.serialCfg.serialPort, config.serialCfg.seralBaudraet, 70, False)
     mqttClient = MQTTClientController("Master", lock, threadDataComp)
 
     model.start()
@@ -171,7 +171,7 @@ if __name__ == "__main__":
             mqttClient.isConnect = False
 
         if  golfcart.auto == True:
-            print("predicted_speed, angle: ", 60, model.ouput)
+            print("predicted_speed, angle: ", 60, -model.ouput)
             golfcart.RunAuto(60, model.ouput)
 
     mqttClient.client.loop_stop()

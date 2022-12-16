@@ -81,6 +81,8 @@ class BicycleModel(threading.Thread):
     def run(self):
         while not self.threadDataComp.isQuit:
             dataInput = self.inputQueue.get()
+            if (dataInput == None):
+                print("[BicycleModel]: dataInput = None")
             speed = dataInput[0]
             x = dataInput[1]
             y = dataInput[2]

@@ -81,7 +81,10 @@ class Car(metaclass=SingletonMeta):
                     self.carController.go_reverse()  
 
                 elif keyboard.is_pressed('enter'):
-                    self.carController.brake()  
+                    self.carController.brake()
+                
+                elif keyboard.is_pressed('r'):
+                    self.carController.ResetDriver()
 
                 else:
                     self.carController.nop()

@@ -85,6 +85,12 @@ class Controller():
             self.Car_SetSpeedAngle(-self.speed, self.angle, 0)  
             self.direction = -1
 
+    def ResetDriver(self):
+        Send = bytes([0xAA, 0x07, 0x01, 0xEE])
+        print("Reset")
+
+        if not self.serialTest:
+            self.serial.write(Send)
 
     def brake(self):
         print("BRAKE")
