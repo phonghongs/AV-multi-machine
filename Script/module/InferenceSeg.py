@@ -43,17 +43,19 @@ class InferenceSegment():
         firstTime = True
         while not self.threadDataComp.isQuit:
             pre = time.time()
-            getTensor = self.threadDataComp.ImageQueue.get()
+            output = self.threadDataComp.ImageQueue.get()
             if (firstTime):
                 pre = time.time()
                 firstTime = False
-            if getTensor is None:
+            if output is None:
                 print("[InferenceSeg] Error when get Image in queue")
                 break
             
+            [getTensor, timestamp] = output
+
             try:
                 outs = self.inference_seg(getTensor)
-                self.threadDataComp.TransformQueue.put(outs)
+                self.threadDataComp.TransformQueue.put([outs, timestamp])
                 # print("[InferenceSeg]: ", time.time() - pre)
                 timecount += 1
                 totalTime += time.time() - pre

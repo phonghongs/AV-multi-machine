@@ -21,15 +21,16 @@ class PostProcessSeg(threading.Thread):
         firstTime = True
         while not self.threadDataComp.isQuit:
             pre = time.time()
-            getSeg = self.threadDataComp.TransformQueue.get()
+            output = self.threadDataComp.TransformQueue.get()
             if (firstTime):
                 pre = time.time()
                 firstTime = False
 
-            if getSeg is None:
+            if output is None:
                 print("[TransFromImage] Error when get Image in queue")
                 break
-
+            
+            [getSeg, timestamp] = output
             try:
                 getSeg = torch.tensor(getSeg)
                 # shapes = ((720, 1280), ((0.5333333333333333, 0.5), (0.0, 12.0))) #720 1280
@@ -46,7 +47,7 @@ class PostProcessSeg(threading.Thread):
                 _, da_seg_mask = torch.max(da_seg_mask, 1)
                 da_seg_mask = da_seg_mask.int().squeeze().cpu().numpy()
                 
-                self.threadDataComp.QuantaQueue.put(da_seg_mask)
+                self.threadDataComp.QuantaQueue.put([da_seg_mask, timestamp])
                 # print("[PostProcessSeg]: ", time.time() - pre)
                 timecount += 1
                 totalTime += time.time() - pre

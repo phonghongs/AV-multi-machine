@@ -31,7 +31,7 @@ class ReadImage(threading.Thread):
 
             if self.threadDataComp.ImageQueue.full():
                 self.threadDataComp.ImageQueue.get()
-            self.threadDataComp.ImageQueue.put(result)
+            self.threadDataComp.ImageQueue.put([result, time.time()])
 
             # with self.threadDataComp.ImageCondition:
             #     if self.threadDataComp.ImageQueue.qsize() > 0:

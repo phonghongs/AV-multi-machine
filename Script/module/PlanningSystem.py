@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 import torchvision.transforms as transforms
 from Script.Component.ThreadDataComp import ThreadDataComp
-from Script.MqttController.MQTTController import MQTTClientController
+from Script.MqttController.MQTTController import MQTTClientController, PublishType
 
 def warpPers(xP, yP, MP):
     p1 = (MP[0][0]*xP + MP[0][1]*yP + MP[0][2]) / (MP[2][0]*xP + MP[2][1]*yP + MP[2][2])
@@ -30,12 +30,13 @@ class PlanningSystem(threading.Thread):
         while not self.threadDataComp.isQuit:
             pre = time.time()
 
-            da_seg_mask = self.threadDataComp.QuantaQueue.get()
+            output = self.threadDataComp.QuantaQueue.get()
             prepre = time.time()
-            if da_seg_mask is None:
+            if output is None:
                 print("[TransFromImage] Error when get Image in queue")
                 break
-
+            
+            [da_seg_mask, timestamp] = output
             # color_area = np.zeros(
             #     (da_seg_mask.shape[0], da_seg_mask.shape[1], 1), dtype=np.uint8)
             
@@ -80,8 +81,10 @@ class PlanningSystem(threading.Thread):
                 # output = cv2.cvtColor(blank_image, cv2.COLOR_GRAY2RGB)
                 # self.output.write(output)
                 # self.output.write(blank_image)
-                self.mqttController.publish_controller(str(finalCont))
-                print("[PlanningSystem]: ", time.time() - prepre)
+                # self.mqttController.publish_controller(str(finalCont))
+                
+                self.mqttController.publish_message(PublishType.Control, str(finalCont))
+                print("[PlanningSystem]: ", time.time() - prepre, self.mqttController.mqttComp.timestampValue - timestamp)
             except Exception as e:
                 print("[PlanningSystem]", e)
             # print(output[2].dtype, type(output[2]), output[2].shape)

@@ -49,17 +49,18 @@ class Quanta(threading.Thread):
             if output is None:
                 print("[TransFromImage] Error when get Image in queue")
                 break
-
+            
+            [outputTensor, timestamp] = output
             # output[0] = (output[0] * 255).round().astype(np.uint8)
             # output[1] = (output[1] * 255).round().astype(np.uint8)
             # output[2] = (output[2] * 255).round().astype(np.uint8)
 
             # output[0] = self.quantize(output[0])
             # output[1] = self.quantize(output[1])
-            output[2] = self.quantize(output[2])
+            outputTensor[2] = self.quantize(outputTensor[2])
             # print(output[2].dtype, type(output[2]), output[2].shape)
             with self.threadDataComp.OutputCondition:
-                self.threadDataComp.output = output
+                self.threadDataComp.output = [outputTensor, timestamp]
 
             timecount += 1
             totalTime += time.time() - pre

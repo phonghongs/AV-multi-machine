@@ -17,15 +17,17 @@ class FrameSegment(object):
         self.loop = loop
         self.client = client
 
-    async def udp_frame(self, img):
+    async def udp_frame(self, img, timestamp = 0):
         """
         Compress image and Break down
         into data segments
         """
         length = struct.pack('>Q', len(img))
+        timestampTransmit = struct.pack('>Q', len(timestamp))
 
         # sendall to make sure it blocks if there's back-pressure on the socket
         await self.loop.sock_sendall(self.client, length)
+        await self.loop.sock_sendall(self.client, timestampTransmit)
         await self.loop.sock_sendall(self.client, img)
 
 class ServerPerception(threading.Thread):
@@ -75,20 +77,22 @@ class ServerPerception(threading.Thread):
         while request != 'quit' or not self.threadDataComp.isQuit:
             request = (await loop.sock_recv(client, 1024)).decode('utf8')
 
+            timestamp_pre = time.time()
             with self.threadDataComp.OutputCondition:
-                outcache = self.threadDataComp.output
-            output = outcache
+                output = self.threadDataComp.output
+            [outcache, timestamp] = output
+            output_udp = outcache
 
             # print("OK", len(output), type(output[2]), output[2].dtype)
 
             if (request == 'JETSON1'):
-                await fs.udp_frame(output[2].tobytes())
+                await fs.udp_frame(output_udp[2].tobytes())
             elif (request == 'JETSON2'):
-                stackOutput = output.flatten().tobytes()
-                arraySize = f"{len(output[0])}|||"
+                stackOutput = output_udp.flatten().tobytes()
+                arraySize = f"{len(output_udp[0])}|||"
                 data = bytes(arraySize, 'ascii') + stackOutput
                 await fs.udp_frame(data)
             elif request != 'quit':
-                await fs.udp_frame(output[0])
+                await fs.udp_frame(output_udp[0])
 
         client.close()

@@ -63,12 +63,12 @@ class Inference():
 
             # with self.threadDataComp.TransformCondition:
             #     self.threadDataComp.TransformCondition.wait()
-            getImage = self.threadDataComp.TransformQueue.get()
-
-            if getImage is None:
+            output = self.threadDataComp.TransformQueue.get()
+            if output is None:
                 print("[Inference] Error when get Image in queue")
                 break
             
+            [getImage, timestamp] = output
             outs = self.inference_bb(getImage.numpy())
 
             # color_area = post_process_seg( torch.tensor(outs[2]), self.img, self.shapes)
@@ -78,7 +78,7 @@ class Inference():
 
             # if self.threadDataComp.QuantaQueue.full():
             #     self.threadDataComp.QuantaQueue.get()
-            self.threadDataComp.QuantaQueue.put(outs)
+            self.threadDataComp.QuantaQueue.put([outs, timestamp])
 
             # with self.threadDataComp.QuantaCondition:
             #     if self.threadDataComp.QuantaQueue.qsize() > 0:

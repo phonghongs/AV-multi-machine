@@ -38,6 +38,10 @@ def SetupConfig(config:PareSystemConfig):
         config.mqttCfg.brokerPort,
         config.mqttCfg.mqttTopic,
         config.mqttCfg.controlTopic,
+        config.mqttCfg.timestampTopic,
+        config.mqttCfg.timestampProcessTopic,
+        0,
+        0,
         False,
         False
     )
@@ -62,7 +66,7 @@ def main():
     mqttController = MQTTClientController(mqttComp, threadDataComp, 'TX2')
     mqttController.client.loop_start()
     readImageTask = ReadImage(threadDataComp)
-    tranformTask = TransfromImage(threadDataComp)
+    tranformTask = TransfromImage(threadDataComp, mqttController)
     quantaTask = Quanta(threadDataComp)
     inferenceTask = Inference(threadDataComp)
     serverPerception = ServerPerception(threadDataComp, connectComp, mqttComp)

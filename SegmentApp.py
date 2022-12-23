@@ -48,6 +48,10 @@ def SetupConfig(config:PareSystemConfig):
         config.mqttCfg.brokerPort,
         config.mqttCfg.mqttTopic,
         config.mqttCfg.controlTopic,
+        config.mqttCfg.timestampTopic,
+        config.mqttCfg.timestampProcessTopic,
+        0,
+        0,
         False,
         False
     )

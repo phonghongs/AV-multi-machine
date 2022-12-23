@@ -42,6 +42,10 @@ class MQTTConfig():
                 self.mqttTopic = configSession['mqttTopic']
             if 'controlTopic' in configSession:
                 self.controlTopic = configSession['controlTopic']
+            if 'timestampTopic' in configSession:
+                self.timestampTopic = configSession['timestampTopic']
+            if 'timestampProcessTopic' in configSession:
+                self.timestampProcessTopic = configSession['timestampProcessTopic']
         except Exception as e:
             self.error = True
             print("[MQTTConfig] Error")

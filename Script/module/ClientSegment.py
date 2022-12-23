@@ -45,7 +45,9 @@ class ClientSegment(threading.Thread):
                     self.s.send(self.CLIENT_ID.encode('utf8'))
                     bs = self.s.recv(8)
                     (length,) = struct.unpack('>Q', bs)
-                    
+                    ts = self.s.recv(32)
+                    (timestamp,) = struct.unpack('>Q', ts)
+
                     data = b''
                     while len(data) < length:
                         # doing it in batches is generally better than trying
@@ -57,7 +59,7 @@ class ClientSegment(threading.Thread):
                     result = np.frombuffer(data, dtype=np.uint8).reshape(1, 256, 48, 80)
                     out = 0.039736519607843135*(result - 9.0).astype('float32') #dequanta
 
-                    self.threadDataComp.ImageQueue.put(out)
+                    self.threadDataComp.ImageQueue.put([out, timestamp])
                     # print("[ClientSegment]: ", time.time() - pre)
 
                     timecount += 1

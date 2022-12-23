@@ -2,7 +2,7 @@ import time
 import threading
 import torchvision.transforms as transforms
 from Script.Component.ThreadDataComp import ThreadDataComp
-from Script.MqttController.MQTTController import MQTTClientController
+from Script.MqttController.MQTTController import MQTTClientController, PublishType
 
 class TransfromImage(threading.Thread):
     def __init__(self,  _threadDataComp: ThreadDataComp, _mqttController: MQTTClientController):
@@ -30,12 +30,15 @@ class TransfromImage(threading.Thread):
 
             # with self.threadDataComp.ImageCondition:
             #     self.threadDataComp.ImageCondition.wait()
-            getImage = self.threadDataComp.ImageQueue.get()
-            self.mqttController.publish_TimeStamp(time.time())
+            output = self.threadDataComp.ImageQueue.get()
+            # self.mqttController.publish_TimeStamp(time.time())
 
-            if getImage is None:
+            if output is None:
                 print("[TransFromImage] Error when get Image in queue")
                 break
+            
+            [getImage, timestamp] = output
+            self.mqttController.publish_message(PublishType.TIMESTAMP, timestamp)
 
             img = self.transform(getImage[0])
 
@@ -45,7 +48,7 @@ class TransfromImage(threading.Thread):
 
             # if self.threadDataComp.TransformQueue.full():
             #     self.threadDataComp.TransformQueue.get()
-            self.threadDataComp.TransformQueue.put(img)
+            self.threadDataComp.TransformQueue.put([img, timestamp])
 
             # with self.threadDataComp.TransformCondition:
             #     if self.threadDataComp.TransformQueue.qsize() > 0:

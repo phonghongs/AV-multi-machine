@@ -4,6 +4,13 @@ import time
 import logging
 from Script.Component.MQTTComp import MQTTComp
 from Script.Component.ThreadDataComp import ThreadDataComp
+from enum import Enum
+
+class PublishType(Enum):
+    CONTROL = 1,
+    TIMESTAMP = 2,
+    TIMESTAMPPROCESS = 3
+
 
 class MQTTClientController():
     def __init__(self, _mqttComp: MQTTComp, _threadDataComp: ThreadDataComp, _clientName: string):
@@ -16,7 +23,6 @@ class MQTTClientController():
         self.client.on_disconnect = self.on_disconnect
         self.client.on_connect_fail = self.on_connect_fail
         self.client.on_message = self.on_message
-        
 
     # def __del__(self):
     #     self.client.loop_stop()
@@ -53,6 +59,10 @@ class MQTTClientController():
         if (msgContent == "newUDP"):
             print("NewUDP")
             self.mqttComp.createUDPTask = True
+
+        elif (msgContent == self.mqttComp.timestampTopic):
+            self.mqttComp.timestampValue = float(msgContent)
+
         elif (msgContent == "quit"):
             print("quit")
             self.threadDataComp.isQuit = True
@@ -69,8 +79,20 @@ class MQTTClientController():
             self.threadDataComp.TransformQueue.put(None)
             self.threadDataComp.QuantaQueue.put(None)
 
-    def publish_controller(self, drivableSpace):
-        self.client.publish(self.mqttComp.controlTopic, drivableSpace)
+    # def publish_controller(self, drivableSpace):
+    #     self.client.publish(self.mqttComp.controlTopic, drivableSpace)
     
-    def publish_TimeStamp(self, timestamp):
-        self.client.publish(self.mqttComp.controlTopic + "/timestamp", timestamp)
+    # def publish_TimeStamp(self, timestamp):
+    #     self.client.publish(self.mqttComp.timestampTopic, timestamp)
+    
+    def publish_message(self, type : PublishType, message):
+        topic = "NULL"
+
+        if (type == PublishType.CONTROL):
+            topic = self.mqttComp.controlTopic
+        elif (type == PublishType.TIMESTAMP):
+            topic = self.mqttComp.timestampTopic
+        elif (type == PublishType.TIMESTAMPPROCESS):
+            topic = self.mqttComp.timestampProcessTopic
+
+        self.client.publish(topic, message)
