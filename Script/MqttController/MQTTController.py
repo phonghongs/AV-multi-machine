@@ -71,3 +71,6 @@ class MQTTClientController():
 
     def publish_controller(self, drivableSpace):
         self.client.publish(self.mqttComp.controlTopic, drivableSpace)
+    
+    def publish_TimeStamp(self, timestamp):
+        self.client.publish(self.mqttComp.controlTopic + "/timestamp", timestamp)

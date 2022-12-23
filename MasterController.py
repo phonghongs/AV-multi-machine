@@ -56,6 +56,10 @@ class MQTTClientController():
                 except:
                     print("[MQTT]: Cannot load json from message")
 
+        elif msg.topic == self.controlTopic + "/timestamp":
+            msgContent = msg.payload.decode("utf-8")
+            print(msgContent)
+
     def start_segment(self):
         self.client.publish(self.publishTopic, "newUDP")
     def force_stop(self):
