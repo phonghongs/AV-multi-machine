@@ -93,15 +93,16 @@ def CalSteeringAngle(dataContour, M):
         if dataContour.__len__() < 100:
             return
         preTime = time.time()
-        blank_image = np.zeros((360, 640), np.uint8)
+        blank_image = np.zeros((height, width), np.uint8)
+        cv2.putText(blank_image, f"{model.ouput}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA)
         for center in dataContour:
             cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
-        cv2.imshow("IMG", blank_image)
-        cv2.waitKey(1)
+        # cv2.imshow("IMG", blank_image)
+        # cv2.waitKey(1)
         size = 3
         centers = []
         xBEV = []
-        partPixel = int(360 / size)
+        partPixel = int(height / size)
         xList, yList = [], []
         for i in range(0, size):
             part = [x for x in dataContour if (x[1] > partPixel * i) and (x[1] < partPixel*i + partPixel)]
@@ -114,18 +115,29 @@ def CalSteeringAngle(dataContour, M):
             cY = int(Mm["m01"] / Mm["m00"])    
 
             yCh, xCh = warpPers(cX, cY, M)
+            yCh = cX
+            xCh = cY
+            # print("A", cX, cY)
+            # print("B", yCh, xCh)
+            cv2.circle(blank_image, (int(yCh), int(xCh)), 1, 255, 10)
             centers.append([yCh, xCh])
             # Đổi tọa đổ ảnh qua tọa độ của xe, ảnh là từ trên xuống => x ảnh ~ y ảnh và ngược lại
             # y ảnh / scalenumber - 10.6665 để đưa point về trục tọa độ xe
             # x ảnh / scalenumber - 12 để đưa point lên trên trục x xe và đảo dấu lại
-            yCarAxis = np.negative(yCh / scaleNumber - 10.6665)  
-            xCarAxis = np.negative(xCh / scaleNumber - 12)
+            yCarAxis = np.negative(yCh / scaleNumber - (width / scaleNumber) / 2)     # 640 / 25 / 2 = 12.8  
+            xCarAxis = np.negative(xCh / scaleNumber - (height / scaleNumber)) + cameraToCar  # 270 / 25 = 10.8
             # print(xCarAxis, yCarAxis)
-            xList.append(xCarAxis)    #640 / 30, / 2 = 10.6665 (center)
+            xList.append(xCarAxis)
             yList.append(yCarAxis)
-
-        model.inputQueue.put([10*3.6, xList, yList])
-        print("Cal", time.time() - preTime)
+        print("_____________________________________")
+        xList.append(0)
+        yList.append(0)
+        result = cv2.cvtColor(blank_image, cv2.COLOR_BGR2RGB)
+        cv2.imshow("IMG", blank_image)
+        outputs.write(result)
+        cv2.waitKey(1)
+        model.inputQueue.put([5*3.6, xList, yList])
+        # print("Cal", time.time() - preTime)
     except Exception as e:
         print("Wait", e)
         time.sleep(0.1)
@@ -142,7 +154,10 @@ if __name__ == "__main__":
     src = np.float32([[0, 360], [640, 360], [0, 0], [640, 0]])
     dst = np.float32([[220, 360], [400, 360], [0, 0], [640, 0]])
     M = cv2.getPerspectiveTransform(src, dst)
-    scaleNumber = 30 # scale với tỉ lệ (640 / 480) , => 32 / 18, cần lấy ở giữa
+    scaleNumber = 25 # scale với tỉ lệ (640 / 360) , => 32 / 18, cần lấy ở giữa
+    width, height = 640, 270 # 360 - 90 = 270 : 90 : 0 -> 270 is 11m
+    cameraToCar = 1.5   # m
+    outputs = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (640, 360))
 
     lock = Lock()
     model = BicycleModel(threadDataComp)
@@ -171,9 +186,10 @@ if __name__ == "__main__":
             mqttClient.isConnect = False
 
         if  golfcart.auto == True:
-            print("predicted_speed, angle: ", 60, -model.ouput)
-            golfcart.RunAuto(60, model.ouput)
+            print("predicted_speed, angle: ", 70, model.ouput)
+            golfcart.RunAuto(70, model.ouput*0.55)
 
     mqttClient.client.loop_stop()
     model.OnDestroy()
     model.join()
+    outputs.release()

@@ -82,9 +82,6 @@ class Car(metaclass=SingletonMeta):
 
                 elif keyboard.is_pressed('enter'):
                     self.carController.brake()
-                
-                elif keyboard.is_pressed('r'):
-                    self.carController.ResetDriver()
 
                 else:
                     self.carController.nop()
@@ -102,7 +99,10 @@ class Car(metaclass=SingletonMeta):
                     print("Manual")   
                     self.auto = False
                     self.carController.brake()  
-
+            
+            if keyboard.is_pressed('r'):
+                    self.carController.ResetDriver()
+            
             if keyboard.is_pressed('esc'):
                 self.done = True
 

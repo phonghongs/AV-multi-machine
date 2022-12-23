@@ -86,4 +86,4 @@ class BicycleModel(threading.Thread):
             speed = dataInput[0]
             x = dataInput[1]
             y = dataInput[2]
-            self.ouput = self.GetOptimizeSteering(speed, x, y)
+            self.ouput = - self.GetOptimizeSteering(speed, x, y)
