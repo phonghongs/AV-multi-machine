@@ -40,6 +40,7 @@ class MQTTClientController():
         self.isConnect = True
         client.subscribe(self.controlTopic)
         client.subscribe(self.timestampTopic)
+        client.subscribe(self.timestampProcessTopic)
     
     def on_disconnect(self, client, userdata, rc):
         print("Dis-Connect")
@@ -55,16 +56,17 @@ class MQTTClientController():
         if msg.topic == self.controlTopic:
             if len(msgContent) > 0:
                 try:
-                    content, timestampP = msgContent.split("@@")
-                    timestampProcess = float(timestampP)
                     with self.lock:
-                        self.resultContour = [json.loads(msgContent), timestampProcess]
+                        self.resultContour = json.loads(msgContent)
                         # print(self.resultContour.__len__())
                 except:
                     print("[MQTT]: Cannot load json from message")
 
         elif msg.topic == self.timestampTopic:
-            self.timestamp = float(msgContent)
+            timestamp = float(msgContent)
+        elif msg.topic == self.timestampProcessTopic:
+            timestampProcess = float(msgContent)
+            # print(timestampProcess)
 
     def start_segment(self):
         self.client.publish(self.publishTopic, "newUDP")
@@ -96,15 +98,14 @@ def warpPers(xP, yP, MP):
     p2 = (MP[1][0]*xP + MP[1][1]*yP + MP[1][2]) / (MP[2][0]*xP + MP[2][1]*yP + MP[2][2])
     return [p1, p2]
 
-def CalSteeringAngle(data, M):
+def CalSteeringAngle(dataContour, M):
     try:
-        if data == []:
+        if dataContour == []:
             return
-        if data.__len__() < 100:
+        if dataContour.__len__() < 100:
             return
-        
-        [dataContour, timestamp] = data
         preTime = time.time()
+
         blank_image = np.zeros((height, width), np.uint8)
         for center in dataContour:
             cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
@@ -144,10 +145,10 @@ def CalSteeringAngle(data, M):
         xList.append(0)
         yList.append(0)
 
-        cv2.putText(blank_image, f"{model.ouput} - {mqttClient.timestamp - timestamp}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA)
+        cv2.putText(blank_image, f"{model.ouput} || {mqttClient.timestamp - mqttClient.timestampProcess - time.time() + preTime}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA)
         result = cv2.cvtColor(blank_image, cv2.COLOR_BGR2RGB)
         cv2.imshow("IMG", blank_image)
-        outputs.write(result)
+        # outputs.write(result)
         cv2.waitKey(1)
         model.inputQueue.put([5*3.6, xList, yList])
         # print("Cal", time.time() - preTime)
