@@ -42,7 +42,7 @@ class MQTTClientController():
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
         client.subscribe(self.mqttComp.commandTopic)
-        client.subscribe(self.mqttComp.timestampTopic)
+        # client.subscribe(self.mqttComp.timestampTopic)
 
     def on_disconnect(self, client, userdata, rc):
         self.mqttComp.connectStatus = False
