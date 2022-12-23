@@ -25,7 +25,7 @@ class MQTTClientController():
         self.client.on_message = self.on_message
         self.lock = lockMessage
         self.isConnect = False
-        self.publishTopic = "Multiple_Machine/Master"
+        self.publishTopic = "Multiple_Machine"
         self.controlTopic = "Control"
         self.timestampTopic = "Control/timestamp"
         self.timestampProcessTopic = "Control/timestamp/process"
