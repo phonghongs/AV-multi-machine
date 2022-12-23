@@ -83,8 +83,8 @@ class PlanningSystem(threading.Thread):
                 # self.output.write(blank_image)
                 # self.mqttController.publish_controller(str(finalCont))
                 
-                self.mqttController.publish_message(PublishType.Control, str(finalCont))
-                print("[PlanningSystem]: ", time.time() - prepre, self.mqttController.mqttComp.timestampValue - timestamp)
+                self.mqttController.publish_message(PublishType.CONTROL, str(finalCont))
+                # print("[PlanningSystem]: ", time.time() - prepre, self.mqttController.mqttComp.timestampValue - timestamp)
             except Exception as e:
                 print("[PlanningSystem]", e)
             # print(output[2].dtype, type(output[2]), output[2].shape)
