@@ -27,6 +27,10 @@ class MQTTClientController():
         self.isConnect = False
         self.publishTopic = "Multiple_Machine/Master"
         self.controlTopic = "Control"
+        self.timestampTopic = "Control/timestamp"
+        self.timestampProcessTopic = "Control/timestamp/process"
+        self.timestamp = 0
+        self.timestampProcess = 0
         self.resultContour = []
         self.threadDataComp = _threadDataComp
 
@@ -35,6 +39,7 @@ class MQTTClientController():
         # reconnect then subscriptions will be renewed.
         self.isConnect = True
         client.subscribe(self.controlTopic)
+        client.subscribe(self.timestampTopic)
     
     def on_disconnect(self, client, userdata, rc):
         print("Dis-Connect")
@@ -46,8 +51,8 @@ class MQTTClientController():
     def on_message(self, client, userdata, msg):
         # print(msg.topic+" "+str(msg.payload))
         #control format: speed_angle
+        msgContent = msg.payload.decode("utf-8")
         if msg.topic == self.controlTopic:
-            msgContent = msg.payload.decode("utf-8")
             if len(msgContent) > 0:
                 try:
                     with self.lock:
@@ -56,9 +61,10 @@ class MQTTClientController():
                 except:
                     print("[MQTT]: Cannot load json from message")
 
-        elif msg.topic == self.controlTopic + "/timestamp":
-            msgContent = msg.payload.decode("utf-8")
-            print(msgContent)
+        elif msg.topic == self.timestampTopic:
+            timestamp = float(msgContent)
+        elif msg.topic == self.timestampProcessTopic:
+            timestampProcess = float(msgContent)
 
     def start_segment(self):
         self.client.publish(self.publishTopic, "newUDP")
@@ -165,7 +171,7 @@ if __name__ == "__main__":
 
     lock = Lock()
     model = BicycleModel(threadDataComp)
-    golfcart = Car(config.serialCfg.serialPort, config.serialCfg.seralBaudraet, 70, False)
+    golfcart = Car(config.serialCfg.serialPort, config.serialCfg.seralBaudraet, 70, True)
     mqttClient = MQTTClientController("Master", lock, threadDataComp)
 
     model.start()
