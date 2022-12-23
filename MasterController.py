@@ -55,16 +55,16 @@ class MQTTClientController():
         if msg.topic == self.controlTopic:
             if len(msgContent) > 0:
                 try:
+                    content, timestampP = msgContent.split("@@")
+                    timestampProcess = float(timestampP)
                     with self.lock:
-                        self.resultContour = json.loads(msgContent)
+                        self.resultContour = [json.loads(msgContent), timestampProcess]
                         # print(self.resultContour.__len__())
                 except:
                     print("[MQTT]: Cannot load json from message")
 
         elif msg.topic == self.timestampTopic:
-            timestamp = float(msgContent)
-        elif msg.topic == self.timestampProcessTopic:
-            timestampProcess = float(msgContent)
+            self.timestamp = float(msgContent)
 
     def start_segment(self):
         self.client.publish(self.publishTopic, "newUDP")
@@ -96,15 +96,16 @@ def warpPers(xP, yP, MP):
     p2 = (MP[1][0]*xP + MP[1][1]*yP + MP[1][2]) / (MP[2][0]*xP + MP[2][1]*yP + MP[2][2])
     return [p1, p2]
 
-def CalSteeringAngle(dataContour, M):
+def CalSteeringAngle(data, M):
     try:
-        if dataContour == []:
+        if data == []:
             return
-        if dataContour.__len__() < 100:
+        if data.__len__() < 100:
             return
+        
+        [dataContour, timestamp] = data
         preTime = time.time()
         blank_image = np.zeros((height, width), np.uint8)
-        cv2.putText(blank_image, f"{model.ouput}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA)
         for center in dataContour:
             cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
         # cv2.imshow("IMG", blank_image)
@@ -142,6 +143,8 @@ def CalSteeringAngle(dataContour, M):
         print("_____________________________________")
         xList.append(0)
         yList.append(0)
+
+        cv2.putText(blank_image, f"{model.ouput} - {mqttClient.timestamp - timestamp}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA)
         result = cv2.cvtColor(blank_image, cv2.COLOR_BGR2RGB)
         cv2.imshow("IMG", blank_image)
         outputs.write(result)

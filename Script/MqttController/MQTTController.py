@@ -11,7 +11,6 @@ class PublishType(Enum):
     TIMESTAMP = 2,
     TIMESTAMPPROCESS = 3
 
-
 class MQTTClientController():
     def __init__(self, _mqttComp: MQTTComp, _threadDataComp: ThreadDataComp, _clientName: string):
         self.mqttComp = _mqttComp
