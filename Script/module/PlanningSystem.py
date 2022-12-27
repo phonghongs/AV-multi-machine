@@ -21,7 +21,7 @@ class PlanningSystem(threading.Thread):
         self.src = np.float32([[0, 360], [640, 360], [0, 0], [640, 0]])
         self.dst = np.float32([[200, 360], [440, 360], [0, 0], [640, 0]])
         self.M = cv2.getPerspectiveTransform(self.src, self.dst)
-        self.output = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (640, 360))
+        # self.output = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (640, 360))
 
     def run(self):
         print(threading.currentThread().getName())
@@ -90,10 +90,10 @@ class PlanningSystem(threading.Thread):
             except Exception as e:
                 print("[PlanningSystem]", e)
             # print(output[2].dtype, type(output[2]), output[2].shape)
-            with self.threadDataComp.OutputCondition:
-                self.threadDataComp.output = blank_image
+            # with self.threadDataComp.OutputCondition:
+            #     self.threadDataComp.output = blank_image
 
             timecount += 1
             totalTime += time.time() - pre
         print("[Quanta]: Total Time : ", totalTime/timecount)
-        self.output.release()
+        # self.output.release()
