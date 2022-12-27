@@ -41,13 +41,15 @@ class Controller():
 
 
     def increase_speed(self, step):                        ## Tăng tốc
-        self.speed = np.clip(self.speed + step, 0, self.gear_box[self.mode])
+        # self.speed = np.clip(self.speed + step, 0, self.gear_box[self.mode])
+        self.speed = np.clip(self.speed + step, 0, 100)
 
 
     def decrease_speed(self, step):                        ## Giảm tốc
-        self.speed = np.clip(self.speed - step, 0, self.gear_box[self.mode])
+        # self.speed = np.clip(self.speed - step, 0, self.gear_box[self.mode])
+        self.speed = np.clip(self.speed - step, 0, 100)
     
-
+    
     def turn_right(self, step):                            ## Tăng gốc cua phải
         self.angle = np.clip(self.angle + step, -25, 25)
 

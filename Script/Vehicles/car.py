@@ -47,8 +47,8 @@ class Car(metaclass=SingletonMeta):
 
     def RunAuto(self, speed, angle):
         newangle = self.carController.GetRealAngle(angle)
-        self.carController.Car_SetSpeedAngle(speed, newangle, 0)
-        print(speed, newangle)
+        self.carController.Car_SetSpeedAngle(self.carController.speed , newangle, 0)
+        print(self.carController.speed , newangle)
 
 
     def Thread_read_key_board(self):
@@ -62,11 +62,11 @@ class Car(metaclass=SingletonMeta):
                 if keyboard.is_pressed('ctrl') :
                     self.carController.decrease_mode()
 
-                elif keyboard.is_pressed('w'):
-                    self.carController.increase_speed(2)
+                # elif keyboard.is_pressed('w'):
+                #     self.carController.increase_speed(2)
 
-                elif keyboard.is_pressed('s') :   
-                    self.carController.decrease_speed(2)
+                # elif keyboard.is_pressed('s') :   
+                #     self.carController.decrease_speed(2)
                 
                 elif keyboard.is_pressed('d') :
                     self.carController.turn_right(1)
@@ -90,7 +90,7 @@ class Car(metaclass=SingletonMeta):
                 self.auto = False
                 self.carController.brake()  
 
-            if keyboard.is_pressed('tab'):
+            elif keyboard.is_pressed('tab'):
                 print("HRERERERE")
                 if self.auto == False:
                     print("Auto")
@@ -98,12 +98,18 @@ class Car(metaclass=SingletonMeta):
                 else:       
                     print("Manual")   
                     self.auto = False
-                    self.carController.brake()  
+                    self.carController.brake()
+                time.sleep(1)
             
-            if keyboard.is_pressed('r'):
+            elif keyboard.is_pressed('r'):
                     self.carController.ResetDriver()
-            
-            if keyboard.is_pressed('esc'):
+            elif keyboard.is_pressed('w'):
+                self.carController.increase_speed(2)
+                # self.carController.speed = np.clip(self.carController.speed + 2, 0, 100)
+            elif keyboard.is_pressed('s'):
+                self.carController.decrease_speed(2)
+                # self.carController.speed = np.clip(self.carController.speed - 2, 0, 100)
+            elif keyboard.is_pressed('esc'):
                 self.done = True
 
             time.sleep(0.1)
