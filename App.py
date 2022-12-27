@@ -27,7 +27,7 @@ def SetupConfig(config:PareSystemConfig):
         threading.Condition(),
         threading.Condition(),
         threading.Lock(),    
-        config.backboneCfg.videoSource,
+        config.backboneCfg.InputSource,
         config.backboneCfg.modelPath,
         False,
         [],
@@ -43,7 +43,8 @@ def SetupConfig(config:PareSystemConfig):
         0,
         0,
         False,
-        False
+        False,
+        config.mqttCfg.isTimeStamp
     )
 
     connectComp = ConnectComp(

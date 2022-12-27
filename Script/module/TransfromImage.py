@@ -38,7 +38,9 @@ class TransfromImage(threading.Thread):
                 break
             
             [getImage, timestamp] = output
-            self.mqttController.publish_message(PublishType.TIMESTAMP, timestamp)
+
+            if (self.mqttController.IsTimeStamp()):
+                self.mqttController.publish_message(PublishType.TIMESTAMP, timestamp)
 
             img = self.transform(getImage[0])
 

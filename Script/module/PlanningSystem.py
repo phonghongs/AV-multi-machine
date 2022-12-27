@@ -84,7 +84,8 @@ class PlanningSystem(threading.Thread):
                 # self.mqttController.publish_controller(str(finalCont))
                 
                 self.mqttController.publish_message(PublishType.CONTROL, str(finalCont))
-                self.mqttController.publish_message(PublishType.TIMESTAMPPROCESS, str(timestamp))
+                if (self.mqttController.IsTimeStamp()):
+                    self.mqttController.publish_message(PublishType.TIMESTAMPPROCESS, str(timestamp))
                 # print("[PlanningSystem]: ", time.time() - prepre, self.mqttController.mqttComp.timestampValue - timestamp)
             except Exception as e:
                 print("[PlanningSystem]", e)

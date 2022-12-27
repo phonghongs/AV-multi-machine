@@ -17,18 +17,19 @@ class FrameSegment(object):
         self.loop = loop
         self.client = client
 
-    async def udp_frame(self, img, timestamp):
+    async def udp_frame(self, img, timestamp, isTimeStamp):
         """
         Compress image and Break down
         into data segments
         """
         # print(type(timestamp))
         length = struct.pack('>Q', len(img))
-        timestampTransmit = struct.pack('>d', timestamp)
-
+        
         # sendall to make sure it blocks if there's back-pressure on the socket
         await self.loop.sock_sendall(self.client, length)
-        await self.loop.sock_sendall(self.client, timestampTransmit)
+        if (isTimeStamp):
+            timestampTransmit = struct.pack('>d', timestamp)
+            await self.loop.sock_sendall(self.client, timestampTransmit)
         await self.loop.sock_sendall(self.client, img)
 
 class ServerPerception(threading.Thread):
@@ -88,13 +89,13 @@ class ServerPerception(threading.Thread):
             # print("OK", len(output), type(output[2]), output[2].dtype)
 
             if (request == 'JETSON1'):
-                await fs.udp_frame(output_udp[2].tobytes(), timestamp)
+                await fs.udp_frame(output_udp[2].tobytes(), timestamp, self.mqttComp.isTimeStamp)
             elif (request == 'JETSON2'):
                 stackOutput = output_udp.flatten().tobytes()
                 arraySize = f"{len(output_udp[0])}|||"
                 data = bytes(arraySize, 'ascii') + stackOutput
-                await fs.udp_frame(data, timestamp)
+                await fs.udp_frame(data, timestamp, self.mqttComp.isTimeStamp)
             elif request != 'quit':
-                await fs.udp_frame(output_udp[0], timestamp)
+                await fs.udp_frame(output_udp[0], timestamp, self.mqttComp.isTimeStamp)
 
         client.close()

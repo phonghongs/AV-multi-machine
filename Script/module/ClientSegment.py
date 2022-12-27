@@ -45,8 +45,11 @@ class ClientSegment(threading.Thread):
                     self.s.send(self.CLIENT_ID.encode('utf8'))
                     bs = self.s.recv(8)
                     (length,) = struct.unpack('>Q', bs)
-                    ts = self.s.recv(8)
-                    (timestamp,) = struct.unpack('>d', ts)
+
+                    timestamp = 0
+                    if (self.mqttComp.isTimeStamp):
+                        ts = self.s.recv(8)
+                        (timestamp,) = struct.unpack('>d', ts)
 
                     data = b''
                     while len(data) < length:

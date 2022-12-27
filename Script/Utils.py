@@ -12,6 +12,17 @@ class BackboneConfig():
                 self.serverIP = configSession['serverIP']
             if 'cameraCap' in configSession:
                 self.cameraCap = configSession['cameraCap']
+            if 'isVideoTest' in configSession:
+                if (int(configSession['isVideoTest']) == 1):
+                    self.isVideoTest = True
+                else:
+                    self.isVideoTest = False
+
+                if (self.isVideoTest == True):
+                    self.InputSource = self.videoSource
+                else:
+                    self.InputSource = self.cameraCap
+
         except Exception as e:
             self.error = True
             print("[BackboneConfig] Error")
@@ -46,6 +57,12 @@ class MQTTConfig():
                 self.timestampTopic = configSession['timestampTopic']
             if 'timestampProcessTopic' in configSession:
                 self.timestampProcessTopic = configSession['timestampProcessTopic']
+            if 'isTimeStamp' in configSession:
+                if (int(configSession['isTimeStamp']) == 1):
+                    self.isTimeStamp = True
+                else:
+                    self.isTimeStamp = False
+
         except Exception as e:
             self.error = True
             print("[MQTTConfig] Error")
@@ -58,6 +75,11 @@ class SerialConfig():
                 self.serialPort = configSession['serialPort']
             if 'seralBaudraet' in configSession:
                 self.seralBaudraet = configSession['seralBaudraet']
+            if 'isTest' in configSession:
+                if (int(configSession['isTest']) == 1):
+                    self.isTest = True
+                else:
+                    self.isTest = False
         except Exception as e:
             self.error = True
             print("[SerialConfig] Error")

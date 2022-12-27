@@ -53,7 +53,8 @@ def SetupConfig(config:PareSystemConfig):
         0,
         0,
         False,
-        False
+        False,
+        config.mqttCfg.isTimeStamp
     )
 
     connectComp = ConnectComp(

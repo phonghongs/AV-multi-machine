@@ -42,7 +42,8 @@ class MQTTClientController():
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
         client.subscribe(self.mqttComp.commandTopic)
-        # client.subscribe(self.mqttComp.timestampTopic)
+        if (self.mqttComp.isTimeStamp):
+            client.subscribe(self.mqttComp.timestampTopic)
 
     def on_disconnect(self, client, userdata, rc):
         self.mqttComp.connectStatus = False
@@ -56,7 +57,7 @@ class MQTTClientController():
     def on_message(self, client, userdata, msg):
         # print(msg.topic+" "+str(msg.payload))
         msgContent = msg.payload.decode("utf-8")
-        
+
         if (msg.topic == self.mqttComp.timestampTopic):
             self.mqttComp.timestampValue = float(msgContent)
         if (msg.topic == self.mqttComp.commandTopic):
@@ -97,3 +98,6 @@ class MQTTClientController():
             topic = self.mqttComp.timestampProcessTopic
 
         self.client.publish(topic, message)
+    
+    def IsTimeStamp(self):
+        return self.mqttComp.isTimeStamp

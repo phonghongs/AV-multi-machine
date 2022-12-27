@@ -13,3 +13,4 @@ class MQTTComp():
     timestampProcessValue : float
     connectStatus : bool
     createUDPTask : bool
+    isTimeStamp : bool

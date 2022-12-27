@@ -63,9 +63,9 @@ class MQTTClientController():
                     print("[MQTT]: Cannot load json from message")
 
         elif msg.topic == self.timestampTopic:
-            timestamp = float(msgContent)
+            self.timestamp = float(msgContent)
         elif msg.topic == self.timestampProcessTopic:
-            timestampProcess = float(msgContent)
+            self.timestampProcess = float(msgContent)
             # print(timestampProcess)
 
     def start_segment(self):
@@ -77,7 +77,7 @@ class MQTTClientController():
 global threadDataComp
 
 def SetupConfig(config:PareSystemConfig):
-    global threadDataComp, connectComp, mqttComp
+    global threadDataComp
     threadDataComp = ThreadDataComp(
         Queue(maxsize=3),   #Image Queue
         Queue(maxsize=3),   #Transform Queue
@@ -175,7 +175,7 @@ if __name__ == "__main__":
 
     lock = Lock()
     model = BicycleModel(threadDataComp)
-    golfcart = Car(config.serialCfg.serialPort, config.serialCfg.seralBaudraet, 70, True)
+    golfcart = Car(config.serialCfg.serialPort, config.serialCfg.seralBaudraet, 70, config.serialCfg.isTest)
     mqttClient = MQTTClientController("Master", lock, threadDataComp)
 
     model.start()
