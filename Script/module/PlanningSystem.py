@@ -21,7 +21,7 @@ class PlanningSystem(threading.Thread):
         self.src = np.float32([[0, 360], [640, 360], [0, 0], [640, 0]])
         self.dst = np.float32([[200, 360], [440, 360], [0, 0], [640, 0]])
         self.M = cv2.getPerspectiveTransform(self.src, self.dst)
-        # self.output = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (640, 360))
+        self.output = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (640, 360))
 
     def run(self):
         print(threading.currentThread().getName())
@@ -37,16 +37,16 @@ class PlanningSystem(threading.Thread):
                 break
             
             [da_seg_mask, timestamp] = output
-            # color_area = np.zeros(
-            #     (da_seg_mask.shape[0], da_seg_mask.shape[1], 1), dtype=np.uint8)
+            color_area = np.zeros(
+                (da_seg_mask.shape[0], da_seg_mask.shape[1], 1), dtype=np.uint8)
             
             
-            # color_area[da_seg_mask == 1] = [255]
-            # output = cv2.cvtColor(color_area, cv2.COLOR_GRAY2RGB)
-            # print(color_area.shape)
+            color_area[da_seg_mask == 1] = [255]
+            output = cv2.cvtColor(color_area, cv2.COLOR_GRAY2RGB)
+            print(color_area.shape)
 
-            # self.output.write(output)
-            # continue
+            self.output.write(output)
+            continue
 
             color_area = da_seg_mask.astype(np.uint8)
             try:
@@ -96,4 +96,4 @@ class PlanningSystem(threading.Thread):
             timecount += 1
             totalTime += time.time() - pre
         print("[Quanta]: Total Time : ", totalTime/timecount)
-        # self.output.release()
+        self.output.release()

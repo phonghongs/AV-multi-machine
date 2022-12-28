@@ -103,12 +103,12 @@ def main():
     #     f.write(engine.serialize())
         
     engine = build_engine(
-        'onnx_export/backbone.onnx')
+        'onnx_export/backbone_2.onnx')
     with open('trt_tx21/bb_16.trt', 'wb') as f:
         f.write(engine.serialize())
         
     engine = build_engine(
-        'onnx_export/seg.onnx')
+        'onnx_export/seg_2.onnx')
     with open('trt_tx21/seg_16.trt', 'wb') as f:
         f.write(engine.serialize())
     # model = backbone()
