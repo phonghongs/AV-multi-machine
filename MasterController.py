@@ -31,6 +31,7 @@ class MQTTClientController():
         self.timestampProcessTopic = "Control/timestamp/process"
         self.timestamp = 0
         self.timestampProcess = 0
+        self.pre_time = time.time()
         self.resultContour = []
         self.threadDataComp = _threadDataComp
 
@@ -58,9 +59,10 @@ class MQTTClientController():
                 try:
                     with self.lock:
                         self.resultContour = json.loads(msgContent)
-                        # print(self.resultContour.__len__())
-                except:
-                    print("[MQTT]: Cannot load json from message")
+                        print(self.resultContour.__len__(), time.time() - self.pre_time)
+                        self.pre_time = time.time()
+                except Exception as ex:
+                    print("[MQTT]: Cannot load json from message", ex)
 
         elif msg.topic == self.timestampTopic:
             self.timestamp = float(msgContent)
@@ -106,9 +108,10 @@ def CalSteeringAngle(dataContour, M):
             return
         preTime = time.time()
 
-        blank_image = np.zeros((height, width), np.uint8)
-        for center in dataContour:
-            cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
+        if vizualize:
+            blank_image = np.zeros((height, width), np.uint8)
+            for center in dataContour:
+                cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
         # cv2.imshow("IMG", blank_image)
         # cv2.waitKey(1)
         size = 3
@@ -131,7 +134,8 @@ def CalSteeringAngle(dataContour, M):
             xCh = cY
             # print("A", cX, cY)
             # print("B", yCh, xCh)
-            cv2.circle(blank_image, (int(yCh), int(xCh)), 1, 255, 10)
+            if vizualize:
+                cv2.circle(blank_image, (int(yCh), int(xCh)), 1, 255, 10)
             centers.append([yCh, xCh])
             # Đổi tọa đổ ảnh qua tọa độ của xe, ảnh là từ trên xuống => x ảnh ~ y ảnh và ngược lại
             # y ảnh / scalenumber - 10.6665 để đưa point về trục tọa độ xe
@@ -145,13 +149,14 @@ def CalSteeringAngle(dataContour, M):
         xList.append(0)
         yList.append(0)
 
-        cv2.putText(blank_image, f"{model.ouput} || {mqttClient.timestamp - mqttClient.timestampProcess - time.time() + preTime}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA)
-        result = cv2.cvtColor(blank_image, cv2.COLOR_BGR2RGB)
-        cv2.imshow("IMG", blank_image)
-        # outputs.write(result)
-        cv2.waitKey(1)
+        if vizualize:
+            cv2.putText(blank_image, f"{model.ouput} || {mqttClient.timestamp - mqttClient.timestampProcess - time.time() + preTime}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA)
+            result = cv2.cvtColor(blank_image, cv2.COLOR_BGR2RGB)
+            cv2.imshow("IMG", blank_image)
+            # # outputs.write(result)
+            cv2.waitKey(1)
         model.inputQueue.put([5*3.6, xList, yList])
-        # print("Cal", time.time() - preTime)
+        print("Cal", time.time() - preTime)
     except Exception as e:
         print("Wait", e)
         time.sleep(0.1)
@@ -171,6 +176,7 @@ if __name__ == "__main__":
     scaleNumber = 25 # scale với tỉ lệ (640 / 360) , => 32 / 18, cần lấy ở giữa
     width, height = 640, 270 # 360 - 90 = 270 : 90 : 0 -> 270 is 11m
     cameraToCar = 1.5   # m
+    vizualize = True
     outputs = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (640, 360))
 
     lock = Lock()
@@ -201,7 +207,7 @@ if __name__ == "__main__":
 
         if  golfcart.auto == True:
             print("predicted_speed, angle: ", 70, model.ouput)
-            golfcart.RunAuto(70, model.ouput*0.55)
+            golfcart.RunAuto(70, model.ouput*0.35)
 
     mqttClient.client.loop_stop()
     model.OnDestroy()
