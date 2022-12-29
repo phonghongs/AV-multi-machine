@@ -37,16 +37,16 @@ class PlanningSystem(threading.Thread):
                 break
             
             [da_seg_mask, timestamp] = output
-            # color_area = np.zeros(
-            #     (da_seg_mask.shape[0], da_seg_mask.shape[1], 1), dtype=np.uint8)
+            color_area = np.zeros(
+                (da_seg_mask.shape[0], da_seg_mask.shape[1], 1), dtype=np.uint8)
             
             
-            # color_area[da_seg_mask == 1] = [255]
-            # output = cv2.cvtColor(color_area, cv2.COLOR_GRAY2RGB)
-            # print(color_area.shape)
+            color_area[da_seg_mask == 1] = [255]
+            output = cv2.cvtColor(color_area, cv2.COLOR_GRAY2RGB)
+            print(color_area.shape)
 
-            # self.output.write(output)
-            # continue
+            self.output.write(output)
+            continue
 
             color_area = da_seg_mask.astype(np.uint8)
             try:
@@ -90,8 +90,8 @@ class PlanningSystem(threading.Thread):
             except Exception as e:
                 print("[PlanningSystem]", e)
             # print(output[2].dtype, type(output[2]), output[2].shape)
-            with self.threadDataComp.OutputCondition:
-                self.threadDataComp.output = blank_image
+            # with self.threadDataComp.OutputCondition:
+            #     self.threadDataComp.output = blank_image
 
             timecount += 1
             totalTime += time.time() - pre

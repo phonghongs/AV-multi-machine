@@ -97,19 +97,19 @@ def quantize(a):
     return a.astype('uint8'), c, d
 from multiple import *
 def main():
+    # engine = build_engine(
+    #     'onnx_export/det.onnx')
+    # with open('trt8_tx2/det_16.trt', 'wb') as f:
+    #     f.write(engine.serialize())
+        
     engine = build_engine(
-        'onnx_export/det.onnx')
-    with open('trt8_tx2/det_16.trt', 'wb') as f:
+        'onnx_export/backbone_2.onnx')
+    with open('trt_tx21/bb_16.trt', 'wb') as f:
         f.write(engine.serialize())
         
     engine = build_engine(
-        'onnx_export/backbone.onnx')
-    with open('trt8_tx2/bb_16.trt', 'wb') as f:
-        f.write(engine.serialize())
-        
-    engine = build_engine(
-        'onnx_export/seg.onnx')
-    with open('trt8_tx2/seg_16.trt', 'wb') as f:
+        'onnx_export/seg_2.onnx')
+    with open('trt_tx21/seg_16.trt', 'wb') as f:
         f.write(engine.serialize())
     # model = backbone()
     # model.eval()
