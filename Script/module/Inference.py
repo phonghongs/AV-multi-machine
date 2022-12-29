@@ -64,6 +64,10 @@ class Inference():
             # with self.threadDataComp.TransformCondition:
             #     self.threadDataComp.TransformCondition.wait()
             output = self.threadDataComp.TransformQueue.get()
+
+            if self.threadDataComp.isTimeProcess:
+                pre = time.time()
+
             if output is None:
                 print("[Inference] Error when get Image in queue")
                 break

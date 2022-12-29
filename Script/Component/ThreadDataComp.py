@@ -17,4 +17,5 @@ class ThreadDataComp():
     ImagePath: string
     ModelPath: string
     isQuit: bool
+    isTimeProcess: bool
     output : list

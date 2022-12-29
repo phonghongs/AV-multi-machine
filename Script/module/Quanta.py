@@ -46,6 +46,9 @@ class Quanta(threading.Thread):
             #     self.threadDataComp.QuantaCondition.wait()
             output = self.threadDataComp.QuantaQueue.get()
 
+            if self.threadDataComp.isTimeProcess:
+                pre = time.time()
+
             if output is None:
                 print("[TransFromImage] Error when get Image in queue")
                 break

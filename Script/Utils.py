@@ -62,6 +62,11 @@ class MQTTConfig():
                     self.isTimeStamp = True
                 else:
                     self.isTimeStamp = False
+            if 'processTime' in configSession:
+                if (int(configSession['processTime']) == 1):
+                    self.processTime = True
+                else:
+                    self.processTime = False
 
         except Exception as e:
             self.error = True
@@ -113,5 +118,3 @@ class PareSystemConfig():
         except Exception as e:
             self.isHaveConfig = False
             print("[Config] Error when pare config")
-
-        

@@ -32,57 +32,54 @@ class PlanningSystem(threading.Thread):
 
             output = self.threadDataComp.QuantaQueue.get()
             prepre = time.time()
+
+            if self.threadDataComp.isTimeProcess:
+                pre = time.time()
+
             if output is None:
                 print("[TransFromImage] Error when get Image in queue")
                 break
-            
-            [da_seg_mask, timestamp] = output
-            color_area = np.zeros(
-                (da_seg_mask.shape[0], da_seg_mask.shape[1], 1), dtype=np.uint8)
-            
-            
-            color_area[da_seg_mask == 1] = [255]
-            output = cv2.cvtColor(color_area, cv2.COLOR_GRAY2RGB)
-            print(color_area.shape)
 
-            self.output.write(output)
-            continue
+            [da_seg_mask, timestamp] = output
+            # color_area = np.zeros(
+            #     (da_seg_mask.shape[0], da_seg_mask.shape[1], 1), dtype=np.uint8)
+            
+            
+            # color_area[da_seg_mask == 1] = [255]
+
+            # for i in range(0, color_area.shape[1]):
+            #     color_area[color_area.shape[0] - 1, i] = 255
+
+            # cont, hier = cv2.findContours(color_area, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            # maxarea=0
+            # indx=-1
+            # for ind,cnt in enumerate(cont) :
+            #     area = cv2.contourArea(cnt)
+            #     if area > maxarea:
+            #         indx=ind
+            #         maxarea=area
+            # mask_num = np.zeros(color_area.shape, np.uint8)
+            # cv2.drawContours(mask_num, [cont[indx]], -1, 255, -1)
+
+            # output = cv2.cvtColor(mask_num, cv2.COLOR_GRAY2RGB)
+            # print(color_area.shape)
+
+            # self.output.write(output)
+            # continue
 
             color_area = da_seg_mask.astype(np.uint8)
+            for i in range(0, color_area.shape[1]):
+                color_area[color_area.shape[0] - 1, i] = 1
             try:
                 #_____________________ Find contour of segment _____________________
-                conts, hier = cv2.findContours(color_area, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-                cont = sorted(conts, key= lambda area_Index: cv2.contourArea(area_Index) , reverse=True)[0]
-                # # print(cont.shape)
-                # # print("=================")
-                finalCont = [cnt[0] for cnt in cont.tolist()]
-
-                # finalCont : (640, 360) : (x, y) lọc theo x từ trên xuống rồi lọc theo y từ trái qua để ra được [[6, 257], [6, 238], [13, 238], [14, 237], [14, 232], [15, 231]
-                finalCont = sorted(finalCont, key= lambda y : y[1], reverse=True)
-                finalCont = sorted(finalCont, key= lambda y : y[0])
-
-                #_____________________ Contour Fillter _____________________
-                blank_image = np.zeros((color_area.shape[0], color_area.shape[1]), np.uint8)
-                upperLine = []
-                upperLine.append([0, color_area.shape[0]])
-                lastY = finalCont[0][1]
-                for i in range(0, finalCont.__len__() - 1):
-                    if (finalCont[i][0] != finalCont[i+1][0]):
-                        upperLine.append(finalCont[i])
-                upperLine.append(finalCont[-1])
-                upperLine.append([color_area.shape[1], color_area.shape[0]])
-                upperLine = np.array(upperLine)
-                #_____________________ Find segment Center  _____________________
-                cv2.fillPoly(blank_image, pts = [upperLine], color =255)
-                conts, hier = cv2.findContours(blank_image[90:], cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-                cont = sorted(conts, key= lambda area_Index: cv2.contourArea(area_Index) , reverse=True)[0]
-                finalCont = [cnt[0] for cnt in cont.tolist()]
-
+                
+                # finalCont = self.FillNoise(color_area)
+                finalCont = self.FillNoise_v2(color_area[90:])
                 # output = cv2.cvtColor(blank_image, cv2.COLOR_GRAY2RGB)
                 # self.output.write(output)
                 # self.output.write(blank_image)
                 # self.mqttController.publish_controller(str(finalCont))
-                
+
                 self.mqttController.publish_message(PublishType.CONTROL, str(finalCont))
                 if (self.mqttController.IsTimeStamp()):
                     self.mqttController.publish_message(PublishType.TIMESTAMPPROCESS, str(timestamp))
@@ -97,3 +94,40 @@ class PlanningSystem(threading.Thread):
             totalTime += time.time() - pre
         print("[Quanta]: Total Time : ", totalTime/timecount)
         self.output.release()
+
+    def FillNoise_v2(self, input):
+        conts, hier = cv2.findContours(input, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        cont = sorted(conts, key= lambda area_Index: cv2.contourArea(area_Index) , reverse=True)[0]
+        finalCont = [cnt[0] for cnt in cont.tolist()]
+        return finalCont
+
+
+    def FillNoise(self, input):
+        conts, hier = cv2.findContours(input, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        cont = sorted(conts, key= lambda area_Index: cv2.contourArea(area_Index) , reverse=True)[0]
+        # # print(cont.shape)
+        # # print("=================")
+        finalCont = [cnt[0] for cnt in cont.tolist()]
+
+        # finalCont : (640, 360) : (x, y) lọc theo x từ trên xuống rồi lọc theo y từ trái qua để ra được [[6, 257], [6, 238], [13, 238], [14, 237], [14, 232], [15, 231]
+        finalCont = sorted(finalCont, key= lambda y : y[1], reverse=True)
+        finalCont = sorted(finalCont, key= lambda y : y[0])
+
+        #_____________________ Contour Fillter _____________________
+        blank_image = np.zeros((input.shape[0], input.shape[1]), np.uint8)
+        upperLine = []
+        upperLine.append([0, input.shape[0]])
+        lastY = finalCont[0][1]
+        for i in range(0, finalCont.__len__() - 1):
+            if (finalCont[i][0] != finalCont[i+1][0]):
+                upperLine.append(finalCont[i])
+        upperLine.append(finalCont[-1])
+        upperLine.append([input.shape[1], input.shape[0]])
+        upperLine = np.array(upperLine)
+        #_____________________ Find segment Center  _____________________
+        cv2.fillPoly(blank_image, pts = [upperLine], color =255)
+        conts, hier = cv2.findContours(blank_image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        cont = sorted(conts, key= lambda area_Index: cv2.contourArea(area_Index) , reverse=True)[0]
+        finalCont = [cnt[0] for cnt in cont.tolist()]
+
+        return finalCont

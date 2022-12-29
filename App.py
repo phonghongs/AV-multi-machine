@@ -30,6 +30,7 @@ def SetupConfig(config:PareSystemConfig):
         config.backboneCfg.InputSource,
         config.backboneCfg.modelPath,
         False,
+        config.mqttCfg.processTime,
         [],
     )
 
@@ -96,12 +97,12 @@ def main():
 
     timeSize = threadDataComp.totalTime.qsize()
     count = 0
-    while not threadDataComp.totalTime.empty():
-        count += threadDataComp.totalTime.get()
+    # while not threadDataComp.totalTime.empty():
+    #     count += threadDataComp.totalTime.get()
 
-    np.save('testtensor.npy', threadDataComp.output[2])
+    # np.save('testtensor.npy', threadDataComp.output[2])
 
-    print("[App]: ", count / timeSize)
+    # print("[App]: ", count / timeSize)
 
 if __name__ == "__main__":
     main()

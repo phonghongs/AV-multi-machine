@@ -44,6 +44,7 @@ def SetupConfig(config:PareSystemConfig):
         config.clientSegmentCfg.videoSource,
         config.clientSegmentCfg.modelPath,
         False,
+        config.mqttCfg.processTime,
         [],
     )
 

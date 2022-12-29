@@ -47,6 +47,9 @@ class InferenceSegment():
             if (firstTime):
                 pre = time.time()
                 firstTime = False
+
+            if self.threadDataComp.isTimeProcess:
+                pre = time.time()
             if output is None:
                 print("[InferenceSeg] Error when get Image in queue")
                 break

@@ -33,6 +33,9 @@ class TransfromImage(threading.Thread):
             output = self.threadDataComp.ImageQueue.get()
             # self.mqttController.publish_TimeStamp(time.time())
 
+            if self.threadDataComp.isTimeProcess:
+                pre = time.time()
+
             if output is None:
                 print("[TransFromImage] Error when get Image in queue")
                 break
