@@ -21,7 +21,9 @@ class PlanningSystem(threading.Thread):
         self.src = np.float32([[0, 360], [640, 360], [0, 0], [640, 0]])
         self.dst = np.float32([[200, 360], [440, 360], [0, 0], [640, 0]])
         self.M = cv2.getPerspectiveTransform(self.src, self.dst)
-        self.output = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (640, 360))
+        self.scaleNumber = 25
+        self.cameraToCar = 1.5
+        self.output = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (640, 270))
 
     def run(self):
         print(threading.currentThread().getName())
@@ -68,19 +70,31 @@ class PlanningSystem(threading.Thread):
             # continue
 
             color_area = da_seg_mask.astype(np.uint8)
+            color_area = color_area[90:]                # 90 -> 360
+            self.height = color_area.shape[0]
+            self.width = color_area.shape[1]
+
             for i in range(0, color_area.shape[1]):
                 color_area[color_area.shape[0] - 1, i] = 1
             try:
                 #_____________________ Find contour of segment _____________________
                 
                 # finalCont = self.FillNoise(color_area)
-                finalCont = self.FillNoise_v2(color_area[90:])
-                # output = cv2.cvtColor(blank_image, cv2.COLOR_GRAY2RGB)
-                # self.output.write(output)
-                # self.output.write(blank_image)
-                # self.mqttController.publish_controller(str(finalCont))
+                finalCont = self.FillNoise_v2(color_area)
+                centerPoint = self.MidPointFinding(finalCont)
 
-                self.mqttController.publish_message(PublishType.CONTROL, str(finalCont))
+                # blank_image = np.zeros((self.height, self.width), np.uint8)
+                # for cnt in finalCont:
+                #     cv2.circle(blank_image, (int(cnt[0]), int(cnt[1])), 1, 255, 10)
+
+                # centers = centerPoint[2]
+                # for center in centers:
+                #     cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
+                # output = cv2.cvtColor(blank_image, cv2.COLOR_GRAY2RGB)
+                # print(output.shape)
+                # self.output.write(output)
+
+                self.mqttController.publish_message(PublishType.CONTROL, str(centerPoint))
                 if (self.mqttController.IsTimeStamp()):
                     self.mqttController.publish_message(PublishType.TIMESTAMPPROCESS, str(timestamp))
                 # print("[PlanningSystem]: ", time.time() - prepre, self.mqttController.mqttComp.timestampValue - timestamp)
@@ -95,12 +109,44 @@ class PlanningSystem(threading.Thread):
         print("[Quanta]: Total Time : ", totalTime/timecount)
         self.output.release()
 
+    def MidPointFinding(self, input):
+        size = 3
+        centers = []
+        xBEV = []
+        partPixel = int(self.height / size)
+        xList, yList = [], []
+        for i in range(0, size):
+            part = [x for x in input if (x[1] > partPixel * i) and (x[1] < partPixel*i + partPixel)]
+            part = np.array(part)
+
+            Mm = cv2.moments(part)
+            if Mm["m00"] <= 0:
+                continue
+            cX = int(Mm["m10"] / Mm["m00"])
+            cY = int(Mm["m01"] / Mm["m00"])    
+            yCh = cX
+            xCh = cY
+            # print("A", cX, cY)
+            # print("B", yCh, xCh)
+
+            centers.append([yCh, xCh])
+            # Đổi tọa đổ ảnh qua tọa độ của xe, ảnh là từ trên xuống => x ảnh ~ y ảnh và ngược lại
+            # y ảnh / scalenumber - 10.6665 để đưa point về trục tọa độ xe
+            # x ảnh / scalenumber - 12 để đưa point lên trên trục x xe và đảo dấu lại
+            yCarAxis = np.negative(yCh / self.scaleNumber - (self.width / self.scaleNumber) / 2)     # 640 / 25 / 2 = 12.8  
+            xCarAxis = np.negative(xCh / self.scaleNumber - (self.height / self.scaleNumber)) + self.cameraToCar  # 270 / 25 = 10.8
+            # print(xCarAxis, yCarAxis)
+            xList.append(xCarAxis)
+            yList.append(yCarAxis)
+            result = [xList, yList, centers]
+        return result
+
     def FillNoise_v2(self, input):
-        conts, hier = cv2.findContours(input, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        image = cv2.warpPerspective(input, self.M, (self.width, self.height))
+        conts, hier = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         cont = sorted(conts, key= lambda area_Index: cv2.contourArea(area_Index) , reverse=True)[0]
         finalCont = [cnt[0] for cnt in cont.tolist()]
         return finalCont
-
 
     def FillNoise(self, input):
         conts, hier = cv2.findContours(input, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)

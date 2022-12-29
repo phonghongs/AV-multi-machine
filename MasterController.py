@@ -58,8 +58,9 @@ class MQTTClientController():
             if len(msgContent) > 0:
                 try:
                     with self.lock:
-                        self.resultContour = json.loads(msgContent)
-                        print(self.resultContour.__len__(), time.time() - self.pre_time)
+                        # self.resultContour = json.loads(msgContent)
+                        data = json.loads(msgContent)
+                        print(data, time.time() - self.pre_time)
                         self.pre_time = time.time()
                 except Exception as ex:
                     print("[MQTT]: Cannot load json from message", ex)
