@@ -134,7 +134,8 @@ class PlanningSystem(threading.Thread):
             # y ảnh / scalenumber - 10.6665 để đưa point về trục tọa độ xe
             # x ảnh / scalenumber - 12 để đưa point lên trên trục x xe và đảo dấu lại
             yCarAxis = np.negative(yCh / self.scaleNumber - (self.width / self.scaleNumber) / 2)     # 640 / 25 / 2 = 12.8  
-            xCarAxis = np.negative(xCh / self.scaleNumber - (self.height / self.scaleNumber)) + self.cameraToCar * (size - i)  # 270 / 25 = 10.8
+            xCarAxis = np.negative(xCh / self.scaleNumber - (self.height / self.scaleNumber)) + self.cameraToCar  # 270 / 25 = 10.8
+            # xCarAxis = np.negative(xCh / self.scaleNumber - (self.height / self.scaleNumber)) + self.cameraToCar * (size - i)  # 270 / 25 = 10.8
             # print(xCarAxis, yCarAxis)
             xList.append(xCarAxis)
             yList.append(yCarAxis)
