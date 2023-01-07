@@ -58,9 +58,9 @@ class MQTTClientController():
             if len(msgContent) > 0:
                 try:
                     with self.lock:
-                        # self.resultContour = json.loads(msgContent)
-                        data = json.loads(msgContent)
-                        print(data, time.time() - self.pre_time)
+                        self.resultContour = json.loads(msgContent)
+                        # data = json.loads(msgContent)
+                        # print(data, time.time() - self.pre_time)
                         self.pre_time = time.time()
                 except Exception as ex:
                     print("[MQTT]: Cannot load json from message", ex)
@@ -102,62 +102,27 @@ def warpPers(xP, yP, MP):
     p2 = (MP[1][0]*xP + MP[1][1]*yP + MP[1][2]) / (MP[2][0]*xP + MP[2][1]*yP + MP[2][2])
     return [p1, p2]
 
-def CalSteeringAngle(dataContour, M):
+def CalSteeringAngle(dataContour):
     try:
         if dataContour == []:
             return
-        if dataContour.__len__() < 100:
-            return
+        # if dataContour.__len__() < 2:
+        #     return
         preTime = time.time()
+        
+        blank_image = np.zeros((270, 640), np.uint8)
+        centers = dataContour[2]
+        for center in centers:
+            cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
 
-        if vizualize:
-            blank_image = np.zeros((height, width), np.uint8)
-            for center in dataContour:
-                cv2.circle(blank_image, (int(center[0]), int(center[1])), 1, 255, 10)
-        # cv2.imshow("IMG", blank_image)
-        # cv2.waitKey(1)
-        size = 3
-        centers = []
-        xBEV = []
-        partPixel = int(height / size)
-        xList, yList = [], []
-        for i in range(0, size):
-            part = [x for x in dataContour if (x[1] > partPixel * i) and (x[1] < partPixel*i + partPixel)]
-            part = np.array(part)
+        for cnt in dataContour[3]:
+            cv2.circle(blank_image, (int(cnt[0]), int(cnt[1])), 1, 255, 10)
 
-            Mm = cv2.moments(part)
-            if Mm["m00"] <= 0:
-                continue
-            cX = int(Mm["m10"] / Mm["m00"])
-            cY = int(Mm["m01"] / Mm["m00"])    
+        cv2.putText(blank_image, f"{model.ouput} || { - time.time() + preTime}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA)
+        model.inputQueue.put([15*3.6, dataContour[0], dataContour[1]])
 
-            yCh, xCh = warpPers(cX, cY, M)
-            yCh = cX
-            xCh = cY
-            # print("A", cX, cY)
-            # print("B", yCh, xCh)
-            if vizualize:
-                cv2.circle(blank_image, (int(yCh), int(xCh)), 1, 255, 10)
-            centers.append([yCh, xCh])
-            # Đổi tọa đổ ảnh qua tọa độ của xe, ảnh là từ trên xuống => x ảnh ~ y ảnh và ngược lại
-            # y ảnh / scalenumber - 10.6665 để đưa point về trục tọa độ xe
-            # x ảnh / scalenumber - 12 để đưa point lên trên trục x xe và đảo dấu lại
-            yCarAxis = np.negative(yCh / scaleNumber - (width / scaleNumber) / 2)     # 640 / 25 / 2 = 12.8  
-            xCarAxis = np.negative(xCh / scaleNumber - (height / scaleNumber)) + cameraToCar  # 270 / 25 = 10.8
-            # print(xCarAxis, yCarAxis)
-            xList.append(xCarAxis)
-            yList.append(yCarAxis)
-        print("_____________________________________")
-        xList.append(0)
-        yList.append(0)
-
-        if vizualize:
-            cv2.putText(blank_image, f"{model.ouput} || {mqttClient.timestamp - mqttClient.timestampProcess - time.time() + preTime}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA)
-            result = cv2.cvtColor(blank_image, cv2.COLOR_BGR2RGB)
-            cv2.imshow("IMG", blank_image)
-            # # outputs.write(result)
-            cv2.waitKey(1)
-        model.inputQueue.put([5*3.6, xList, yList])
+        cv2.imshow("IMG", blank_image)
+        cv2.waitKey(1)
         print("Cal", time.time() - preTime)
     except Exception as e:
         print("Wait", e)
@@ -169,16 +134,9 @@ if __name__ == "__main__":
     if (not config.isHaveConfig):
         print("[MasterController]: Pareconfig error")
         exit()
-    
+
     SetupConfig(config)
-    
-    src = np.float32([[0, 360], [640, 360], [0, 0], [640, 0]])
-    dst = np.float32([[220, 360], [400, 360], [0, 0], [640, 0]])
-    M = cv2.getPerspectiveTransform(src, dst)
-    scaleNumber = 25 # scale với tỉ lệ (640 / 360) , => 32 / 18, cần lấy ở giữa
-    width, height = 640, 270 # 360 - 90 = 270 : 90 : 0 -> 270 is 11m
-    cameraToCar = 1.5   # m
-    vizualize = True
+
     outputs = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (640, 360))
 
     lock = Lock()
@@ -198,7 +156,7 @@ if __name__ == "__main__":
         with lock:
             dataReceive = mqttClient.resultContour
         
-        CalSteeringAngle(dataReceive, M)
+        CalSteeringAngle(dataReceive)
 
         if (keyboard.is_pressed('n')):
             mqttClient.start_segment()
@@ -209,7 +167,7 @@ if __name__ == "__main__":
 
         if  golfcart.auto == True:
             print("predicted_speed, angle: ", 70, model.ouput)
-            golfcart.RunAuto(70, model.ouput*0.35)
+            golfcart.RunAuto(70, model.ouput*0.75)
 
     mqttClient.client.loop_stop()
     model.OnDestroy()
