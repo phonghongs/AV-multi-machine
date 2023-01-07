@@ -87,14 +87,14 @@ def quantize(a):
     a = np.round_((1/c)*a-d)
     return a.astype('uint8'), c, d
 
-engine = build_engine(
-    'onnx_export/seg_2.onnx')
-with open('trt_tx20/seg_16.trt', 'wb') as f:
-    f.write(engine.serialize())
+# engine = build_engine(
+#     'onnx_export/seg_2.onnx')
+# with open('trt_tx20/seg_16.trt', 'wb') as f:
+#     f.write(engine.serialize())
 
 engine = build_engine(
-    'onnx_export/backbone_2.onnx')
-with open('trt_tx20/bb_16.trt', 'wb') as f:
+    '/home/tx21/AV-multi-machine/onnx_export/det.onnx')
+with open('trt_tx20/det_16.trt', 'wb') as f:
     f.write(engine.serialize())
 # engine = load_engine('/home/ceec/YOLOP/tr_export/bb_16.trt', False)
 

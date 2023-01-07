@@ -157,7 +157,7 @@ def CalSteeringAngle(dataContour, M):
             cv2.imshow("IMG", blank_image)
             # # outputs.write(result)
             cv2.waitKey(1)
-        model.inputQueue.put([5*3.6, xList, yList])
+        model.inputQueue.put([15*3.6, xList, yList])
         print("Cal", time.time() - preTime)
     except Exception as e:
         print("Wait", e)

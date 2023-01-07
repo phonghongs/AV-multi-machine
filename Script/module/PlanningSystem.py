@@ -82,7 +82,7 @@ class PlanningSystem(threading.Thread):
                 # finalCont = self.FillNoise(color_area)
                 finalCont = self.FillNoise_v2(color_area)
                 centerPoint = self.MidPointFinding(finalCont)
-
+                centerPoint.append(finalCont)
                 # blank_image = np.zeros((self.height, self.width), np.uint8)
                 # for cnt in finalCont:
                 #     cv2.circle(blank_image, (int(cnt[0]), int(cnt[1])), 1, 255, 10)
@@ -134,7 +134,7 @@ class PlanningSystem(threading.Thread):
             # y ảnh / scalenumber - 10.6665 để đưa point về trục tọa độ xe
             # x ảnh / scalenumber - 12 để đưa point lên trên trục x xe và đảo dấu lại
             yCarAxis = np.negative(yCh / self.scaleNumber - (self.width / self.scaleNumber) / 2)     # 640 / 25 / 2 = 12.8  
-            xCarAxis = np.negative(xCh / self.scaleNumber - (self.height / self.scaleNumber)) + self.cameraToCar  # 270 / 25 = 10.8
+            xCarAxis = np.negative(xCh / self.scaleNumber - (self.height / self.scaleNumber)) + self.cameraToCar * (size - i)  # 270 / 25 = 10.8
             # print(xCarAxis, yCarAxis)
             xList.append(xCarAxis)
             yList.append(yCarAxis)
