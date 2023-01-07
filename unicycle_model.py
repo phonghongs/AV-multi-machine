@@ -26,21 +26,17 @@ class State:
 
 def update(state, a, delta):
 
-    state.beta = math.atan2(Lr / L * math.tan(delta), 1.0)
-
-    state.x = state.x + state.v * math.cos(state.yaw + state.beta) * dt
-    state.y = state.y + state.v * math.sin(state.yaw + state.beta) * dt
-    state.yaw = state.yaw + state.v / Lr * math.sin(state.beta) * dt
+    state.x = state.x + state.v * math.cos(state.yaw) * dt
+    state.y = state.y + state.v * math.sin(state.yaw) * dt
+    state.yaw = state.yaw + state.v / (L - Lr)* delta * dt
     state.v = state.v + a * dt
-
-    #  print(state.x, state.y, state.yaw, state.v)
 
     return state
 
 
 if __name__ == '__main__':
     print("start Kinematic Bicycle model simulation")
-    import matplotlib.pyplot as plt
+    # import matplotlib.pyplot as plt
     import numpy as np
 
     T = 20
@@ -76,7 +72,7 @@ if __name__ == '__main__':
             times = []
             times = []
             t = 0.0
-
+            a = [0] * T
             delta = [math.radians(i)] * T
             for (ai, di) in zip(a, delta):
                 t = t + dt
